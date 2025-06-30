@@ -7,7 +7,7 @@ import facultyRoutes from './routes/facultyRoutes';
 import deanRoutes from './routes/deanRoutes';
 import superadminRoutes from './routes/superadminRoutes';
 import loginSignupRoutes from './routes/loginSignupRoutes';
-
+import accountCompletion from './routes/accountCompletion'
 
 
 
@@ -29,6 +29,7 @@ app.use('/api/auth', facultyRoutes);
 app.use('/api/auth', superadminRoutes);
 app.use('/api/auth', deanRoutes);
 app.use('/api/loginsignup', loginSignupRoutes);
+app.use('/api/accountcompletion', accountCompletion);
 
 app.use((err: any, req: any, res: any, next: any) => {
   console.error("Global error handler:", err);

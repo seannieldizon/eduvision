@@ -57,11 +57,13 @@ const UserSchema: Schema<IUser> = new Schema({
     },
   },
   course: {
-    type: String,
-    required: function (this: IUser) {
-      return this.role === 'instructor' || this.role === 'programchairperson';
-    }
-  },
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Course",
+  required: function (this: IUser) {
+    return this.role === 'instructor' || this.role === 'programchairperson';
+  }
+},
+
   
   status: {
     type: String,

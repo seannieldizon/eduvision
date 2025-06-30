@@ -348,6 +348,8 @@ export default function AuthPage() {
     <Box
       sx={{
         minHeight: "100vh",
+        width: '100%',
+        backgroundColor: "black",
         backgroundImage: 'url("/CNSCBG.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
