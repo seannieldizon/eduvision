@@ -26,7 +26,7 @@ mongoose.connect(MONGO_URI).then(() => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', facultyRoutes);
-app.use('/api/auth', superadminRoutes);
+app.use('/api/superadmin', superadminRoutes);
 app.use('/api/auth', deanRoutes);
 app.use('/api/loginsignup', loginSignupRoutes);
 app.use('/api/accountcompletion', accountCompletion);

@@ -38,7 +38,7 @@ const ProgramChairInfoOnly: React.FC = () => {
   useEffect(() => {
     const fetchProgramChairInfo = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/programchairinfo-only');
+        const response = await axios.get('http://localhost:5000/api/superadmin/programchairinfo-only');
         console.log("Fetched program chair info:", response.data);
 
         setProgramChairInfo(response.data);
@@ -141,10 +141,13 @@ const ProgramChairInfoOnly: React.FC = () => {
                       <TableCell>{programchairinfo.email}</TableCell>
                       <TableCell>{programchairinfo.college?.name || 'N/A'}</TableCell>
                       <TableCell>
-                        {programchairinfo.status === 'forverification'
-                            ? 'For Verification'
-                            : programchairinfo.status.charAt(0).toUpperCase() + programchairinfo.status.slice(1)}
-                        </TableCell>
+  {programchairinfo?.status === 'forverification'
+    ? 'For Verification'
+    : programchairinfo?.status
+      ? programchairinfo.status.charAt(0).toUpperCase() + programchairinfo.status.slice(1)
+      : 'N/A'}
+</TableCell>
+
 
                       <TableCell>
                         <IconButton color="primary" onClick={() => console.log('Edit', programchairinfo._id)}>

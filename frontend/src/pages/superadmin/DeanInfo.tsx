@@ -136,7 +136,7 @@ const [showPassword, setShowPassword] = useState(false);
         }
       }
   
-      const response = await axios.post('http://localhost:5000/api/auth/faculty', newFaculty);
+      const response = await axios.post('http://localhost:5000/api/superadmin/faculty', newFaculty);
   
       // Add new dean to the list
       setDeans((prev) => [...prev, response.data]);
@@ -188,7 +188,7 @@ const [showPassword, setShowPassword] = useState(false);
   
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/auth/faculty/${id}`);
+        await axios.delete(`http://localhost:5000/api/superadmin/faculty/${id}`);
   
         setDeans(prev => prev.filter(dean => dean._id !== id));
   
@@ -231,7 +231,7 @@ const [showPassword, setShowPassword] = useState(false);
     const fetchColleges = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/all-colleges');
+        const response = await axios.get('http://localhost:5000/api/superadmin/all-colleges');
         console.log('Fetched colleges:', response.data);
         setColleges(response.data);
       } catch (error) {
@@ -246,7 +246,7 @@ const [showPassword, setShowPassword] = useState(false);
 
   const fetchCoursesByCollege = async (collegeCode: string) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/auth/courses/by-college`, {
+      const response = await axios.get(`http://localhost:5000/api/superadmin/courses/by-college`, {
         params: { collegeCode }
       });
       // response.data = [{ name, code }, ...]
@@ -264,7 +264,7 @@ const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
     const fetchDeans = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/dean');
+        const response = await axios.get('http://localhost:5000/api/superadmin/dean');
         setDeans(response.data);
         setLoading(false);
       } catch (error) {

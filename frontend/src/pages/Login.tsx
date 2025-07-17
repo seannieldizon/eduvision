@@ -308,6 +308,8 @@ export default function AuthPage() {
       if (user.course) localStorage.setItem("course", user.course);
       if (user.college?.code) localStorage.setItem("college", user.college.code);
 
+
+
       Swal.fire({
         icon: "success",
         title: `Welcome ${user.last_name}, ${user.first_name} ${user.middle_name || ""}`.trim(),

@@ -49,7 +49,6 @@ export const FacultyProvider: React.FC<{ children: ReactNode }> = ({ children })
   );
 };
 
-// ✅ THIS is the missing piece:
 export const useFacultyContext = () => {
   const context = useContext(FacultyContext);
   if (!context) {

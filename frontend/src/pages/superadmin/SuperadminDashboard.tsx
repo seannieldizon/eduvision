@@ -19,10 +19,11 @@ import {
   SelectChangeEvent,
   Select
 } from '@mui/material';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import SchoolIcon from '@mui/icons-material/School';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PeopleIcon from '@mui/icons-material/People';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { green, grey } from '@mui/material/colors';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import axios from "axios";
@@ -60,8 +61,12 @@ interface Schedule {
 
 
 const SuperAdminDashboard: React.FC = () => {
-  const [instructorCount, setinstructorCount] = useState<number | null>(null);
-  const [programchairCount, setProgramChairCount] = useState<number | null>(null);
+  const [counts, setCounts] = useState({
+    dean: 0,
+    programChairperson: 0,
+    instructor: 0,
+    superadmin: 0,
+  });
   const [allFacultiesLogs, setAllFacultiesLogs] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [chartData, setChartData] = useState<any[][]>([
@@ -98,11 +103,23 @@ const SuperAdminDashboard: React.FC = () => {
     setRoomValue(event.target.value);
   };
 
+  useEffect(() => {
+    const fetchUserCounts = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/superadmin/user-counts");
+        setCounts(res.data);
+      } catch (error) {
+        console.error("Error fetching user counts:", error);
+      }
+    };
+
+    fetchUserCounts();
+  }, []);
 
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const response = await axios.post("http://localhost:5000/api/auth/dean/all-schedules/today", {
+        const response = await axios.post("http://localhost:5000/api/superadmin/dean/all-schedules/today", {
           shortCourseValue: shortCourseValue
         });
         console.log("Received all schedules data:", response.data);
@@ -118,7 +135,7 @@ const SuperAdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/all-courses/college", {
+        const response = await axios.get("http://localhost:5000/api/superadmin/all-courses/college", {
           params: { CollegeName },
         });
         console.log("Courses fetched:", response.data);
@@ -136,7 +153,7 @@ const SuperAdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/all-rooms/college", {
+        const response = await axios.get("http://localhost:5000/api/superadmin/all-rooms/college", {
           params: { CollegeName },
         });
         console.log("Rooms fetched:", response.data);
@@ -151,26 +168,7 @@ const SuperAdminDashboard: React.FC = () => {
     }
   }, [CollegeName]);
   
-  useEffect(() => {
-    const fetchInstructorCount = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/auth/count-all/instructors", {
-          params: { CollegeName }
-        });
-  
-        console.log("Counts response:", response.data);
-  
-        setinstructorCount(response.data.instructorCount);
-        setProgramChairCount(response.data.programChairCount); // Make sure this state exists
-      } catch (error) {
-        console.error("Failed to fetch instructor/program chair count:", error);
-      }
-    };
-  
-    if (CollegeName) {
-      fetchInstructorCount();
-    }
-  }, [CollegeName]);
+
   
   
   useEffect(() => {
@@ -235,7 +233,7 @@ const SuperAdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchAllFacultiesLogs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/logs/all-faculties/today", {
+        const res = await axios.get("http://localhost:5000/api/superadmin/logs/all-faculties/today", {
           params: {
             courseName: CourseName,
           },
@@ -269,14 +267,14 @@ const SuperAdminDashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Card elevation={1} sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
                 <Avatar sx={{ bgcolor: '#f3e8ff', color: '#9f7aea', mr: 2 }}>
-                  <PeopleIcon />
+                  <SchoolIcon />
                 </Avatar>
                 <Box>
                   <Typography variant="h6" fontWeight="600" color="text.primary">
-                    {instructorCount !== null ? instructorCount.toLocaleString() : "Loading..."}
+                    {counts.dean}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Total Faculties
+                    Total Dean
                   </Typography>
                 </Box>
                 <Box sx={{ marginLeft: 'auto' }}>
@@ -290,11 +288,11 @@ const SuperAdminDashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Card elevation={1} sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
                 <Avatar sx={{ bgcolor: '#f3e8ff', color: '#9f7aea', mr: 2 }}>
-                  <PeopleIcon />
+                  <EmojiEventsIcon />
                 </Avatar>
                 <Box>
                   <Typography variant="h6" fontWeight="600" color="text.primary">
-                    {programchairCount !== null ? programchairCount.toLocaleString() : "Loading..."}
+                    {counts.programChairperson}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total Program Chairperson
@@ -306,14 +304,14 @@ const SuperAdminDashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Card elevation={1} sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
                 <Avatar sx={{ bgcolor: '#e0f2fe', color: '#38bdf8', mr: 2 }}>
-                  <HighlightOffIcon />
+                  <PeopleIcon />
                 </Avatar>
                 <Box>
                   <Typography variant="h6" fontWeight="600" color="text.primary">
-                    0
+                    {counts.instructor}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Instructor Absents Today
+                    Total Instructors
                   </Typography>
                 </Box>
               </Card>
@@ -322,14 +320,14 @@ const SuperAdminDashboard: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Card elevation={1} sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
                 <Avatar sx={{ bgcolor: '#fce7f3', color: '#ec4899', mr: 2 }}>
-                  <WarningAmberIcon />
+                  <AdminPanelSettingsIcon />
                 </Avatar>
                 <Box>
                   <Typography variant="h6" fontWeight="600" color="text.primary">
-                    0                  
+                    {counts.superadmin}                
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Late Instructors
+                    Total Superadmin
                   </Typography>
                 </Box>
                 <Box sx={{ marginLeft: 'auto' }}>

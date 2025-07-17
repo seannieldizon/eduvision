@@ -25,7 +25,7 @@ export interface IUser extends Document {
   password: string;
   role: UserRole;
   college?: mongoose.Types.ObjectId;
-  course?: string;
+  course?: mongoose.Types.ObjectId;
   status: 'forverification' | 'active' | 'inactive';
 }
 

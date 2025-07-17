@@ -42,13 +42,14 @@ const ProgramChairInfoOnly: React.FC = () => {
   const [courseDropdownOpen, setCourseDropdownOpen] = useState<boolean>(false);
 
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-const [statusDropdownOpen, setStatusDropdownOpen] = useState<boolean>(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState<boolean>(false);
 
 
   useEffect(() => {
     const fetchInstructorInfo = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/instructorinfo-only');
+        const response = await axios.get('http://localhost:5000/api/superadmin/instructorinfo-only');
+        console.log(response)
         setInstructorInfo(response.data);
         setLoading(false);
 
@@ -245,7 +246,7 @@ const [statusDropdownOpen, setStatusDropdownOpen] = useState<boolean>(false);
                       <TableCell>{instructor.username}</TableCell>
                       <TableCell>{instructor.email}</TableCell>
                       <TableCell>{instructor.college?.code || 'N/A'}</TableCell>
-                      <TableCell>{instructor.course.toUpperCase()}</TableCell>
+                      <TableCell>{instructor.course ? instructor.course.toUpperCase() : 'N/A'}</TableCell>
                       <TableCell>
                         {instructor.status === 'forverification'
                           ? 'For Verification'

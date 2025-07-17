@@ -9,9 +9,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Card, IconButton, Grid, Avatar
+  Card, Grid, Avatar
 } from '@mui/material';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import PeopleIcon from '@mui/icons-material/People';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
@@ -235,11 +234,6 @@ const Dashboard: React.FC = () => {
                     Total Faculties
                   </Typography>
                 </Box>
-                <Box sx={{ marginLeft: 'auto' }}>
-                  <IconButton size="small" sx={{ color: 'gray' }}>
-                    <MoreHorizIcon />
-                  </IconButton>
-                </Box>
               </Card>
             </Grid>
 
@@ -272,11 +266,6 @@ const Dashboard: React.FC = () => {
                     Classes Today
                   </Typography>
                 </Box>
-                <Box sx={{ marginLeft: 'auto' }}>
-                  <IconButton size="small" sx={{ color: 'gray' }}>
-                    <MoreHorizIcon />
-                  </IconButton>
-                </Box>
               </Card>
             </Grid>
 
@@ -292,11 +281,6 @@ const Dashboard: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     Late Instructors
                   </Typography>
-                </Box>
-                <Box sx={{ marginLeft: 'auto' }}>
-                  <IconButton size="small" sx={{ color: 'gray' }}>
-                    <MoreHorizIcon />
-                  </IconButton>
                 </Box>
               </Card>
             </Grid>

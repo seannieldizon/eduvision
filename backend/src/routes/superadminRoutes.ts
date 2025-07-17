@@ -34,15 +34,28 @@ router.get("/programchairinfo-only", async (req: Request, res: Response): Promis
 
 router.get("/instructorinfo-only", async (req: Request, res: Response): Promise<void> => {
   try {
-    const deanList = await UserModel.find({ role: "instructor" })
-      .populate("college", "code name");
+    const instructorList = await UserModel.find({ role: "instructor" })
+      .populate("college", "code name")
+      .populate("course", "code");
 
-    res.json(deanList);
+    // Transform the response to strip out course._id
+    const transformed = instructorList.map((instructor) => {
+  const instructorObj = instructor.toObject();
+  return {
+    ...instructorObj,
+    course: (instructorObj.course as any)?.code || null, // cast to any
+  };
+});
+
+
+    res.json(transformed);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
 
 router.get('/all-colleges', async (req, res) => {
   try {
@@ -74,6 +87,28 @@ router.get('/courses/by-college', async (req: Request, res: Response): Promise<v
   } catch (error) {
     console.error('Error fetching courses by college:', error);
     res.status(500).json({ error: 'Server error fetching courses' });
+  }
+});
+
+// GET total count of users by role
+router.get("/user-counts", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const [deanCount, programChairCount, instructorCount, superadminCount] = await Promise.all([
+      UserModel.countDocuments({ role: "dean" }),
+      UserModel.countDocuments({ role: "programchairperson" }),
+      UserModel.countDocuments({ role: "instructor" }),
+      UserModel.countDocuments({ role: "superadmin" }),
+    ]);
+
+    res.json({
+      dean: deanCount,
+      programChairperson: programChairCount,
+      instructor: instructorCount,
+      superadmin: superadminCount,
+    });
+  } catch (error) {
+    console.error("Error counting users by role:", error);
+    res.status(500).json({ message: "Server error counting users" });
   }
 });
 

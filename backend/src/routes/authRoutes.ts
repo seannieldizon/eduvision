@@ -254,18 +254,31 @@ router.post("/all-schedules/today", async (req: Request, res: Response): Promise
 
 // COUNT OF INSTRUCTORS (filtered by course)
 router.get("/count/instructors", async (req: Request, res: Response): Promise<void> => {
-  const course = req.query.course as string;
+  const courseCode = req.query.course as string;
 
-  if (!course) {
-    res.status(400).json({ message: "Course data is missing" });
+  if (!courseCode) {
+    res.status(400).json({ message: "Course code is missing" });
     return;
   }
 
   try {
-    const count = await UserModel.countDocuments({ role: "instructor", course });
+    // Step 1: Find the course by its code
+    const courseDoc = await Course.findOne({ code: courseCode });
+
+    if (!courseDoc) {
+      res.status(404).json({ message: "Course not found" });
+      return;
+    }
+
+    // Step 2: Count instructors where course = courseDoc._id
+    const count = await UserModel.countDocuments({
+      role: "instructor",
+      course: courseDoc._id,
+    });
+
     res.json({ count });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching instructor count:", error);
     res.status(500).json({ message: "Error fetching instructor count" });
   }
 });
@@ -402,10 +415,19 @@ router.get("/faculty", async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
+    // Step 1: Find course document by its code
+    const courseDoc = await Course.findOne({ code: courseName });
+
+    if (!courseDoc) {
+      res.status(404).json({ message: "Course not found" });
+      return;
+    }
+
+    // Step 2: Find all instructors with this course _id
     const facultyList = await UserModel.find({
       role: "instructor",
-      course: courseName,
-    })
+      course: courseDoc._id,
+    });
 
     res.json(facultyList);
   } catch (error) {

@@ -196,7 +196,16 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     // 1. Try to find user in UserModel
     const user = await UserModel.findOne({
       $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    })
+    .populate({
+      path: "college",
+      select: "code", // Only return the `code` field from the College document
+    })
+    .populate({
+      path: "course",
+      select: "code", // Only return the `code` field from the Course document
     });
+
 
     if (user) {
       const isMatch = await bcrypt.compare(password, user.password);
@@ -220,8 +229,8 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
           middle_name: user.middle_name,
           last_name: user.last_name,
           status: user.status,
-          college: user.college,
-          course: user.course || null,
+          college: user.college && 'code' in user.college ? user.college.code : null,
+          course: user.course && 'code' in user.course ? user.course.code : null,
         },
         requiresUpdate: user.status === "forverification",
       });
