@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Drawer, List, ListItemButton, ListItemIcon, ListItemText,
@@ -11,25 +11,23 @@ const drawerWidth = 260;
 
 const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const CollegeName = localStorage.getItem("college") ?? "";
+  const facultyId = localStorage.getItem("userId") ?? "";
   const navigate = useNavigate();
   const location = useLocation();
   const [activePage, setActivePage] = useState(location.pathname);
 
+  useEffect(() => {
+    setActivePage(location.pathname);
+  }, [location.pathname]);
+
   const menuItems = [
-    { text: "Dashboard", icon: <Dashboard />, path: "/dean-dashboard/:id" },
-    { text: `${CollegeName} Staff Info`, icon: <People />, path: "/programchair-info/:id" },
-    { text: "Live Video", icon: <Videocam />, path: "/deanlivevideo/:id" },
+    { text: "Dashboard", icon: <Dashboard />, path: `/dean-dashboard/${facultyId}` },
+    { text: `${CollegeName} Staff Info`, icon: <People />, path: `/programchair-info/${facultyId}` },
+    { text: "Live Video", icon: <Videocam />, path: `/deanlivevideo/${facultyId}` },
   ];
 
   const handleNavigate = (path: string) => {
-    const facultyId = localStorage.getItem("userId");
-    if (!facultyId) {
-      console.error("No faculty ID found!");
-      return;
-    }
-    const newPath = path.replace(":id", facultyId);
-    setActivePage(newPath);
-    navigate(newPath);
+    navigate(path);
   };
 
   return (
@@ -54,7 +52,7 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <List>
           {menuItems.map((item) => (
             <React.Fragment key={item.text}>
-              {item.text === "Staff Info" && (
+              {item.text === `${CollegeName} Staff Info` && (
                 <>
                   <Typography
                     variant="subtitle2"

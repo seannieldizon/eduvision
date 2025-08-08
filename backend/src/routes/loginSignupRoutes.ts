@@ -7,10 +7,7 @@ import Course from '../models/Course';
 import TempAccount from "../models/TempAccount";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
-import { upload } from "../utils/cloudinary";
-import mongoose from "mongoose";
-import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
+import facultyProfileUpload from "../middleware/facultyProfileUpload";
 
 
 dotenv.config();
@@ -35,8 +32,8 @@ router.post("/send-verification-code", async (req: Request, res: Response): Prom
     return;
   }
 
-  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
-  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 5 * 60 * 1000;
 
   emailCodeStore.set(email, { code, expiresAt });
 
@@ -84,7 +81,6 @@ router.post("/verify-code", async (req: Request, res: Response): Promise<void> =
     return;
   }
 
-  // Trim and convert code to string for safe comparison
   const sanitizedInputCode = String(code).trim();
 
   if (entry.code !== sanitizedInputCode) {
@@ -93,11 +89,11 @@ router.post("/verify-code", async (req: Request, res: Response): Promise<void> =
   }
 
   // Success
-  emailCodeStore.delete(email); // Clean up after successful verification
+  emailCodeStore.delete(email);
   res.status(200).json({ success: true, message: "Email verified successfully." });
 });
 
-router.post("/signup", upload.single("photo"), async (req: Request, res: Response): Promise<void> => {
+router.post("/signup", facultyProfileUpload.single("photo"), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, role, department, program } = req.body;
     const photo = req.file;
@@ -187,23 +183,21 @@ router.post("/check-temp-account", async (req: Request, res: Response) => {
   }
 });
 
-
 // LOGIN ROUTE
 router.post("/login", async (req: Request, res: Response): Promise<void> => {
   try {
     const { usernameOrEmail, password } = req.body;
 
-    // 1. Try to find user in UserModel
     const user = await UserModel.findOne({
       $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
     })
     .populate({
       path: "college",
-      select: "code", // Only return the `code` field from the College document
+      select: "code",
     })
     .populate({
       path: "course",
-      select: "code", // Only return the `code` field from the Course document
+      select: "code",
     });
 
 
@@ -237,7 +231,6 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 2. Check TempAccount if not found in UserModel
     const tempAcc = await TempAccount.findOne({ email: usernameOrEmail });
 
     if (
@@ -280,8 +273,6 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
-
 
 // ✅ GET ALL COLLEGES
 router.get("/colleges", async (req: Request, res: Response) => {

@@ -10,7 +10,7 @@ import {
   TableContainer,
   TableHead,
   TablePagination,
-  TableRow
+  TableRow,
 } from "@mui/material";
 import AdminMain from "./AdminMain";
 import axios from "axios";
@@ -47,9 +47,6 @@ const FacultyReports: React.FC = () => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [rows, setRows] = useState<AttendanceRow[]>([]);
-  
-
-  // Placeholder for your fetched attendance rows
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -65,9 +62,12 @@ const FacultyReports: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.post("http://localhost:5000/api/auth/show-daily-report", {
-          CourseName,
-        });
+        const response = await axios.post(
+          "http://localhost:5000/api/auth/show-daily-report",
+          {
+            CourseName,
+          }
+        );
         if (response.data.success) {
           setRows(response.data.data);
         }
@@ -78,7 +78,6 @@ const FacultyReports: React.FC = () => {
 
     fetchData();
   }, [CourseName]);
-
 
   const handleGenerateReport = async () => {
     try {
@@ -102,70 +101,124 @@ const FacultyReports: React.FC = () => {
 
   return (
     <AdminMain>
-      
-      <Typography variant="h5" align="center" sx={{ mb: 2 }}>Faculty Daily Report</Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        <Box mb={3}>
+          <Typography
+            variant="h4"
+            fontWeight={600}
+            textAlign="center"
+            gutterBottom
+          >
+            Faculty Daily Report
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            textAlign="center"
+            mt={0.5}
+          >
+            Displays the attendance summary of faculty members for the current
+            day.
+          </Typography>
+        </Box>
 
-      <Paper sx={{ width: "100%", height: 500, display: "flex", flexDirection: "column" }}>
-        <TableContainer sx={{ flex: 1, overflow: "auto" }}>
-          <Table stickyHeader aria-label="sticky table">
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ minWidth: column.minWidth }}
-                  >
-                    {column.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.length === 0 ? (
+        <Paper
+          elevation={3}
+          sx={{
+            width: "100%",
+            height: 500,
+            display: "flex",
+            flexDirection: "column",
+            borderRadius: 2,
+            overflow: "hidden",
+          }}
+        >
+          <TableContainer sx={{ flex: 1 }}>
+            <Table stickyHeader aria-label="faculty daily report table">
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={columns.length} align="center">
-                    No attendance today of faculty.
-                  </TableCell>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      sx={{
+                        minWidth: column.minWidth,
+                        backgroundColor: "#f5f5f5",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ) : (
-                rows
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, idx) => (
-                    <TableRow hover tabIndex={-1} key={idx}>
-                      {columns.map((column) => {
-                        const value = (row as any)[column.id];
-                        return (
-                          <TableCell key={column.id} align={column.align}>
-                            {column.format && typeof value === "number"
-                              ? column.format(value)
-                              : value}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
+              </TableHead>
+              <TableBody>
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} align="center">
+                      No attendance records available for today.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row, idx) => (
+                      <TableRow
+                        hover
+                        key={idx}
+                        sx={{ transition: "background 0.3s" }}
+                      >
+                        {columns.map((column) => {
+                          const value = (row as any)[column.id];
+                          return (
+                            <TableCell key={column.id} align={column.align}>
+                              {column.format && typeof value === "number"
+                                ? column.format(value)
+                                : value}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 100]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
 
-      <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
-        <Button variant="contained" color="primary" onClick={handleGenerateReport}>
-          Generate & Download Report
-        </Button>
+        <Box display="flex" justifyContent="flex-end">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleGenerateReport}
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              boxShadow: 1,
+              textTransform: "none",
+              fontWeight: 500,
+            }}
+          >
+            Generate & Download Report
+          </Button>
+        </Box>
       </Box>
-
     </AdminMain>
   );
 };

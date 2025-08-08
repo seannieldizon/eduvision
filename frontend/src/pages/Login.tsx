@@ -296,55 +296,70 @@ export default function AuthPage() {
   };
 
   const handleSubmit = async () => {
-    if (!isLogin) return;
+  if (!isLogin) return;
 
-    setLoading(true);
-    try {
-      const res = await axios.post("http://localhost:5000/api/loginsignup/login", credentials);
-      const { token, user, requiresUpdate, requiresCompletion } = res.data;
+  setLoading(true);
+  try {
+    const res = await axios.post(
+      "http://localhost:5000/api/loginsignup/login",
+      credentials
+    );
+    const { token, user, requiresUpdate, requiresCompletion } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("userId", user.id);
-      if (user.course) localStorage.setItem("course", user.course);
-      if (user.college?.code) localStorage.setItem("college", user.college.code);
+    localStorage.setItem("token", token);
+    localStorage.setItem("userId", user.id);
 
-
-
-      Swal.fire({
-        icon: "success",
-        title: `Welcome ${user.last_name}, ${user.first_name} ${user.middle_name || ""}`.trim(),
-        showConfirmButton: false,
-        timer: 2000,
-      });
-
-      if (requiresUpdate) {
-        navigate(`/update-credentials/${user.id}`);
-      } else if (requiresCompletion) {
-        navigate(`/requires-completion/${user.id}`);
-      }else if (user.role?.toLowerCase() === "superadmin") {
-        navigate(`/superadmin-dashboard/${user.id}`);
-      } else if (user.role?.toLowerCase() === "dean") {
-        navigate(`/dean-dashboard/${user.id}`);
-      } else if (user.role?.toLowerCase() === "instructor" && user.status?.toLowerCase() === "active") {
-        navigate(`/faculty-dashboard/${user.id}`);
-      } else if (user.role?.toLowerCase() === "programchairperson") {
-        navigate(`/dashboard/${user.id}`);
-      }
-    } catch (error) {
-      let errorMessage = "Wala ka dito";
-      if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || "Invalid Credentials";
-      }
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: errorMessage,
-        confirmButtonColor: "steelblue",
-      });
-    } finally {
-      setLoading(false);
+    if (user.course) {
+      localStorage.setItem("course", user.course);
     }
-  };
+
+    if (user.college) {
+      if (typeof user.college === "object" && user.college.code) {
+        localStorage.setItem("college", user.college.code);
+      } else {
+        localStorage.setItem("college", user.college);
+      }
+    }
+
+    Swal.fire({
+      icon: "success",
+      title: `Welcome ${user.last_name}, ${user.first_name} ${user.middle_name || ""}`.trim(),
+      showConfirmButton: false,
+      timer: 2000,
+    });
+
+    if (requiresUpdate) {
+      navigate(`/update-credentials/${user.id}`);
+    } else if (requiresCompletion) {
+      navigate(`/requires-completion/${user.id}`);
+    } else if (user.role?.toLowerCase() === "superadmin") {
+      navigate(`/superadmin-dashboard/${user.id}`);
+    } else if (user.role?.toLowerCase() === "dean") {
+      navigate(`/dean-dashboard/${user.id}`);
+    } else if (
+      user.role?.toLowerCase() === "instructor" &&
+      user.status?.toLowerCase() === "active"
+    ) {
+      navigate(`/faculty-dashboard/${user.id}`);
+    } else if (user.role?.toLowerCase() === "programchairperson") {
+      navigate(`/dashboard/${user.id}`);
+    }
+  } catch (error) {
+    let errorMessage = "Wala ka dito";
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.message || "Invalid Credentials";
+    }
+    Swal.fire({
+      icon: "error",
+      title: "Oops...",
+      text: errorMessage,
+      confirmButtonColor: "steelblue",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <Box

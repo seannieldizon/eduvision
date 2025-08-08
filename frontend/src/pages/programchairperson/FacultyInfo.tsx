@@ -2,11 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AdminMain from "./AdminMain";
 import Swal from "sweetalert2";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import InfoIcon from '@mui/icons-material/Info';
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { useFacultyContext } from "../../context/FacultyContext";
 import {
   Box,
@@ -18,30 +16,20 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button,
   Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
-  InputAdornment,
   TextField,
-  Select,
   MenuItem,
-  FormControl,
-  InputLabel,
   SelectChangeEvent,
-  Divider,
   Menu,
-  Chip
+  Chip,
+  TablePagination,
+  Avatar,
 } from "@mui/material";
-import InfoModal from '../../components/InfoModal';
-import BlockIcon from '@mui/icons-material/Block';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-
-
-
+import InfoModal from "../../components/InfoModal";
+import BlockIcon from "@mui/icons-material/Block";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import AddFacultyModal from "../../components/AddFacultyModal";
 
 const FacultyInfo: React.FC = () => {
   const CourseName = localStorage.getItem("course") ?? "";
@@ -68,18 +56,21 @@ const FacultyInfo: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null);
-  const statusMenuOpen = Boolean(statusAnchorEl);
+  const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  const statusMenuOpen = Boolean(statusAnchorEl);
 
   const handleStatusSelect = (status: string) => {
     setSelectedStatus(status);
     handleStatusClose();
   };
-  
+
   const handleStatusClick = (event: React.MouseEvent<HTMLElement>) => {
-      setStatusAnchorEl(event.currentTarget);
-    };
+    setStatusAnchorEl(event.currentTarget);
+  };
 
   const handleStatusClose = () => {
     setStatusAnchorEl(null);
@@ -134,7 +125,6 @@ const FacultyInfo: React.FC = () => {
       });
     }
   };
-  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -167,25 +157,29 @@ const FacultyInfo: React.FC = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/faculty", newFaculty);
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/faculty",
+        newFaculty
+      );
       setFacultyList([...facultyList, res.data]);
-      Swal.fire({ 
-        icon: "success", 
-        title: "Success", 
-        text: "Faculty account added successfully!" });
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Faculty account added successfully!",
+      });
       handleCloseModal();
     } catch (error: any) {
-      handleCloseModal(false)
+      handleCloseModal(false);
       console.error("Error adding faculty account:", error);
-      Swal.fire({ 
-        icon: "error", 
-        title: "Error", 
-        text: error.response?.data?.message || "Failed to add faculty account.", 
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to add faculty account.",
         timer: 2000,
         timerProgressBar: true,
         willClose: () => {
           setOpenModal(true);
-        }, 
+        },
       });
     }
   };
@@ -229,18 +223,20 @@ const FacultyInfo: React.FC = () => {
   };
 
   const filteredFacultyList = facultyList.filter((faculty) => {
-    const fullName = `${faculty.last_name}, ${faculty.first_name} ${faculty.middle_name || ""}`.toLowerCase();
-    const matchesSearch = 
+    const fullName = `${faculty.last_name}, ${faculty.first_name} ${
+      faculty.middle_name || ""
+    }`.toLowerCase();
+    const matchesSearch =
       fullName.includes(searchQuery) ||
       faculty.username.toLowerCase().includes(searchQuery) ||
       faculty.email.toLowerCase().includes(searchQuery);
-  
-    const matchesStatus = 
-      selectedStatus === "all" || faculty.status.toLowerCase() === selectedStatus.toLowerCase();
-  
+
+    const matchesStatus =
+      selectedStatus === "all" ||
+      faculty.status.toLowerCase() === selectedStatus.toLowerCase();
+
     return matchesSearch && matchesStatus;
   });
-  
 
   const [openInfoModal, setOpenInfoModal] = useState(false);
   const [selectedFacultyInfo, setSelectedFacultyInfo] = useState<any>(null);
@@ -260,25 +256,58 @@ const FacultyInfo: React.FC = () => {
     const last = lastName.substring(0, 3).toUpperCase();
     return last + first;
   };
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (newFaculty.first_name && newFaculty.last_name) {
-        const username = generateUsername(newFaculty.first_name, newFaculty.last_name);
-        setNewFaculty(prev => ({ ...prev, username }));
+        const username = generateUsername(
+          newFaculty.first_name,
+          newFaculty.last_name
+        );
+        setNewFaculty((prev) => ({ ...prev, username }));
       }
     }, 2000);
-  
+
     return () => clearTimeout(timer);
   }, [newFaculty.first_name, newFaculty.last_name]);
-  
-  
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedFacultyList = filteredFacultyList.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
     <AdminMain>
-      <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-      <Typography variant="h4" fontWeight="bold" color="#333" gutterBottom>
-        Faculty Information {CourseName && `- ${CourseName.toUpperCase()}`}
-      </Typography>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 2 }}
+      >
+        <Box mb={3}>
+          <Typography variant="h4" fontWeight="bold" color="#333" gutterBottom>
+            Faculty Information {CourseName && `- ${CourseName.toUpperCase()}`}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mt={0.5}>
+            This section provides detailed information about the faculty members{" "}
+            {CourseName && `under the ${CourseName.toUpperCase()} program`}.
+          </Typography>
+        </Box>
+
         <TextField
           variant="outlined"
           placeholder="Search faculty..."
@@ -294,22 +323,34 @@ const FacultyInfo: React.FC = () => {
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TableContainer component={Paper} sx={{
-            width: "100%",
-            borderRadius: 2,
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
-          }}>
+          <TableContainer
+            component={Paper}
+            sx={{
+              width: "100%",
+              borderRadius: 2,
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
+            }}
+          >
             <Table>
               <TableHead sx={{ backgroundColor: "#F5F3F4" }}>
                 <TableRow>
-                  <TableCell><strong>Full Name</strong></TableCell>
-                  <TableCell><strong>Email</strong></TableCell>
-                  <TableCell><strong>Username</strong></TableCell>
+                  <TableCell>
+                    <strong>Profile</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Full Name</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Email</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Username</strong>
+                  </TableCell>
                   <TableCell>
                     <Box
                       display="flex"
                       alignItems="center"
-                      sx={{ cursor: 'pointer' }}
+                      sx={{ cursor: "pointer" }}
                       onClick={handleStatusClick}
                     >
                       <strong>Status of Account</strong>
@@ -322,36 +363,72 @@ const FacultyInfo: React.FC = () => {
                       open={statusMenuOpen}
                       onClose={handleStatusClose}
                     >
-                      <MenuItem onClick={() => handleStatusSelect('all')}>All</MenuItem>
-                      <MenuItem onClick={() => handleStatusSelect('active')}>Active</MenuItem>
-                      <MenuItem onClick={() => handleStatusSelect('inactive')}>Inactive</MenuItem>
-                      <MenuItem onClick={() => handleStatusSelect('forverification')}>For Verification</MenuItem>
+                      <MenuItem onClick={() => handleStatusSelect("all")}>
+                        All
+                      </MenuItem>
+                      <MenuItem onClick={() => handleStatusSelect("active")}>
+                        Active
+                      </MenuItem>
+                      <MenuItem onClick={() => handleStatusSelect("inactive")}>
+                        Inactive
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleStatusSelect("forverification")}
+                      >
+                        For Verification
+                      </MenuItem>
                     </Menu>
                   </TableCell>
-                  <TableCell><strong></strong></TableCell>
-                  <TableCell><strong>Action</strong></TableCell>
+                  <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredFacultyList.map((faculty) => (
+                {paginatedFacultyList.map((faculty) => (
                   <TableRow
                     key={faculty._id}
                     onClick={() => handleOpenInfoModal(faculty)}
                     sx={{
-                      backgroundColor: selectedFaculty === faculty._id ? "#E3F2FD" : "transparent",
+                      backgroundColor:
+                        selectedFaculty === faculty._id
+                          ? "#E3F2FD"
+                          : "transparent",
                       cursor: "pointer",
                       "&:hover": { backgroundColor: "#FAFAFA" },
                     }}
                   >
-                    <TableCell>{`${faculty.last_name}, ${faculty.first_name} ${faculty.middle_name || ""}`}</TableCell>
+                    <TableCell>
+                      <Box display="flex" alignItems="center">
+                        <Avatar
+  src={faculty.profilePhotoUrl || undefined}
+  sx={{
+    bgcolor: faculty.profilePhotoUrl ? "transparent" : "#90caf9",
+    width: 32,
+    height: 32,
+    mr: 1,
+  }}
+>
+  {!faculty.profilePhotoUrl && faculty.first_name.charAt(0)}
+</Avatar>
+
+                      </Box>
+                    </TableCell>
+
+                    <TableCell>{`${faculty.last_name}, ${faculty.first_name} ${
+                      faculty.middle_name
+                        ? faculty.middle_name.charAt(0) + "."
+                        : ""
+                    }`}</TableCell>
+
                     <TableCell>{faculty.email}</TableCell>
                     <TableCell>{faculty.username}</TableCell>
+
                     <TableCell>
                       <Chip
                         label={
                           faculty.status === "forverification"
                             ? "For Verification"
-                            : faculty.status.charAt(0).toUpperCase() + faculty.status.slice(1)
+                            : faculty.status.charAt(0).toUpperCase() +
+                              faculty.status.slice(1)
                         }
                         color={
                           faculty.status === "active"
@@ -364,231 +441,108 @@ const FacultyInfo: React.FC = () => {
                         variant="outlined"
                       />
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <IconButton color="primary" onClick={() => handleOpenInfoModal(faculty)}>
-                        <InfoIcon />
-                      </IconButton>
 
-                      <InfoModal
-                        open={openInfoModal}
-                        onClose={handleCloseInfoModal}
-                        faculty={selectedFacultyInfo}
-                      />
-                    </TableCell>
+                    {/* MoreHoriz Menu Icon */}
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <IconButton
-                        color="warning"
+                        color="primary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Optional: Block functionality
+                          setAnchorEl(e.currentTarget);
+                          setSelectedFacultyInfo(faculty);
                         }}
                       >
-                        <BlockIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteAccount(faculty._id);
-                        }}
-                      >
-                        <DeleteIcon />
+                        <MoreHorizIcon />
                       </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+                PaperProps={{
+                  sx: {
+                    borderRadius: 2,
+                    boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
+                    minWidth: 160,
+                  },
+                }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    console.log("Block:", selectedFacultyInfo);
+                    setAnchorEl(null);
+                  }}
+                  sx={{
+                    color: "#ed6c02",
+                    fontWeight: 500,
+                    "&:hover": {
+                      backgroundColor: "#fff3e0",
+                    },
+                  }}
+                >
+                  <BlockIcon
+                    fontSize="small"
+                    sx={{ mr: 1, color: "#ed6c02" }}
+                  />
+                  Block
+                </MenuItem>
+
+                <MenuItem
+                  onClick={() => {
+                    if (selectedFacultyInfo) {
+                      handleDeleteAccount(selectedFacultyInfo._id);
+                    }
+                    setAnchorEl(null);
+                  }}
+                  sx={{
+                    color: "#d32f2f", // error red
+                    fontWeight: 500,
+                    "&:hover": {
+                      backgroundColor: "#ffebee", // light red
+                    },
+                  }}
+                >
+                  <DeleteIcon
+                    fontSize="small"
+                    sx={{ mr: 1, color: "#d32f2f" }}
+                  />
+                  Delete
+                </MenuItem>
+              </Menu>
             </Table>
+            {/* Table Pagination */}
+            <TablePagination
+              component="div"
+              count={filteredFacultyList.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25, 50]}
+            />
+            <InfoModal
+              open={openInfoModal}
+              onClose={handleCloseInfoModal}
+              faculty={selectedFacultyInfo}
+            />
           </TableContainer>
         </Grid>
       </Grid>
 
-
-      <Dialog open={openModal} onClose={() => handleCloseModal()} maxWidth="lg" fullWidth>
-        <DialogTitle>Add Faculty Account</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={1}>
-            <Grid item xs={12} sm={3}>
-            <Typography variant="subtitle1" gutterBottom>
-                Personal Info
-              </Typography>
-              <TextField
-                fullWidth
-                label="Last Name"
-                name="last_name"
-                value={newFaculty.last_name}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="First Name"
-                name="first_name"
-                value={newFaculty.first_name}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Middle Name"
-                name="middle_name"
-                value={newFaculty.middle_name}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="College"
-                value={newFaculty.college}
-                disabled
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Course"
-                value={newFaculty.course}
-                disabled
-                margin="dense"
-                InputProps={{
-                  readOnly: true,
-                  sx: {
-                    '& input.Mui-disabled': {
-                      textTransform: 'uppercase',
-                      WebkitTextFillColor: 'unset',
-                    },
-                  },
-                }}
-              />
-            </Grid>
-
-            <Grid item sm={1} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Divider orientation="vertical" flexItem />
-            </Grid>
-
-            <Grid item xs={12} sm={3}>
-            <Typography variant="subtitle1" gutterBottom>
-                Account Credentials
-              </Typography>
-              <TextField
-                fullWidth
-                label="Username"
-                name="username"
-                value={newFaculty.username}
-                onChange={handleInputChange}
-                margin="dense"
-                InputProps={{ readOnly: true }}
-              />
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                value={newFaculty.email}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={newFaculty.password}
-                onChange={handleInputChange}
-                margin="dense"
-                InputProps={{
-                  readOnly: true,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={togglePasswordVisibility} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Role</InputLabel>
-                <Select
-                  name="role"
-                  value={newFaculty.role}
-                  onChange={handleRoleChange}
-                  disabled
-                >
-                  <MenuItem value="instructor">Instructor</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item sm={1} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Divider orientation="vertical" flexItem />
-            </Grid>
-
-            <Grid item xs={12} sm={3}>
-              <Typography variant="subtitle1" gutterBottom>
-                Optional
-              </Typography>
-              <TextField
-                fullWidth
-                label="Highest Educational Attainment"
-                name="highestEducationalAttainment"
-                value={newFaculty.highestEducationalAttainment}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Academic Rank"
-                name="academicRank"
-                value={newFaculty.academicRank}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Status of Appointment"
-                name="statusOfAppointment"
-                value={newFaculty.statusOfAppointment}
-                onChange={handleInputChange}
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Number of Preparations"
-                type="number"
-                inputProps={{ min: 0, step: "any" }}
-                value={newFaculty.numberOfPrep}
-                onChange={(e) =>
-                  setNewFaculty({
-                    ...newFaculty,
-                    numberOfPrep: parseFloat(e.target.value),
-                  })
-                }
-                margin="dense"
-              />
-              <TextField
-                fullWidth
-                label="Total Teaching Load"
-                type="number"
-                inputProps={{ min: 0, step: "any" }}
-                value={newFaculty.totalTeachingLoad}
-                onChange={(e) =>
-                  setNewFaculty({
-                    ...newFaculty,
-                    totalTeachingLoad: parseFloat(e.target.value),
-                  })
-                }
-                margin="dense"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => handleCloseModal()}>Cancel</Button>
-          <Button onClick={handleAddAccount} variant="contained" color="primary">
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <AddFacultyModal
+        open={openModal}
+        onClose={handleCloseModal}
+        onAdd={handleAddAccount}
+        newFaculty={newFaculty}
+        setNewFaculty={setNewFaculty}
+        handleInputChange={handleInputChange}
+        handleRoleChange={handleRoleChange}
+        showPassword={showPassword}
+        togglePasswordVisibility={togglePasswordVisibility}
+      />
     </AdminMain>
   );
 };

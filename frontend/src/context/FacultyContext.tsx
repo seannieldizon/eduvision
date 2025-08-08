@@ -11,6 +11,7 @@ interface Faculty {
   password: string;
   role: string;
   status: string;
+  profilePhotoUrl?: string;
 }
 
 interface FacultyContextType {

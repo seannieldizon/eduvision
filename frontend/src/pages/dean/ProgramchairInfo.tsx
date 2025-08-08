@@ -24,7 +24,9 @@ import {
   InputLabel,
   SelectChangeEvent,
   Menu,
-  Autocomplete
+  Autocomplete,
+  Tooltip,
+  TablePagination
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -35,7 +37,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import Swal from "sweetalert2";
 import { useFacultyContext } from "../../context/FacultyContext";
 import BlockIcon from '@mui/icons-material/Block';
-
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import axios from 'axios';
 import DeanMain from './DeanMain';
 import InfoModal from '../../components/InfoModal';
@@ -96,6 +98,33 @@ const ProgramchairInfo: React.FC = () => {
   const chairOptions = programChairs.map(chair => `${chair.first_name} ${chair.last_name}`);
   const [courses, setCourses] = useState<Course[]>([]);
   
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const [actionAnchorEl, setActionAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedChairId, setSelectedChairId] = useState<string | null>(null);
+
+  const handleActionMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, chairId: string) => {
+    setActionAnchorEl(event.currentTarget);
+    setSelectedChairId(chairId);
+  };
+
+  const handleActionMenuClose = () => {
+    setActionAnchorEl(null);
+    setSelectedChairId(null);
+  };
+
+  const handleChangePage = (_event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
 
   
@@ -373,131 +402,132 @@ const ProgramchairInfo: React.FC = () => {
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TableContainer component={Paper} sx={{ width: '100%' }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell><strong>Full Name</strong></TableCell>
-                  <TableCell><strong>Email</strong></TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <strong>Position</strong>
-                      <IconButton onClick={handleRoleClick} size="small">
-                        <ArrowDropDownIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                    <Menu
-                      anchorEl={roleAnchorEl}
-                      open={roleMenuOpen}
-                      onClose={handleRoleClose}
-                    >
-                      <MenuItem onClick={() => handleRoleSelect('all')}>
-                        All
-                      </MenuItem>
-                      <MenuItem onClick={() => handleRoleSelect('programchairperson')}>
-                        Program Chairperson
-                      </MenuItem>
-                      <MenuItem onClick={() => handleRoleSelect('instructor')}>
-                        Instructor
-                      </MenuItem>
-                    </Menu>
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <strong>Program</strong>
-                      <IconButton onClick={handleCourseClick} size="small">
-                        <ArrowDropDownIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                    <Menu
-                      anchorEl={courseAnchorEl}
-                      open={courseMenuOpen}
-                      onClose={handleCourseClose}
-                    >
-                      <MenuItem onClick={() => handleCourseSelect('all')}>
-                        All
-                      </MenuItem>
-                      {uniqueCourses.map((course) => (
-                        <MenuItem key={course} onClick={() => handleCourseSelect(course)}>
-                          {course}
-                        </MenuItem>
-                      ))}
-                    </Menu>
-                  </TableCell>
+          <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 3, boxShadow: 4 }}>
+      <TableContainer>
+        <Table size="small">
+          <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+            <TableRow>
+              <TableCell><strong>Full Name</strong></TableCell>
+              <TableCell><strong>Email</strong></TableCell>
+              <TableCell>
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <strong>Position</strong>
+                  <IconButton onClick={handleRoleClick} size="small">
+                    <ArrowDropDownIcon fontSize="small" />
+                  </IconButton>
+                  <Menu anchorEl={roleAnchorEl} open={roleMenuOpen} onClose={handleRoleClose}>
+                    <MenuItem onClick={() => handleRoleSelect("all")}>All</MenuItem>
+                    <MenuItem onClick={() => handleRoleSelect("programchairperson")}>Program Chairperson</MenuItem>
+                    <MenuItem onClick={() => handleRoleSelect("instructor")}>Instructor</MenuItem>
+                  </Menu>
+                </Box>
+              </TableCell>
 
+              <TableCell>
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <strong>Program</strong>
+                  <IconButton onClick={handleCourseClick} size="small">
+                    <ArrowDropDownIcon fontSize="small" />
+                  </IconButton>
+                  <Menu anchorEl={courseAnchorEl} open={courseMenuOpen} onClose={handleCourseClose}>
+                    <MenuItem onClick={() => handleCourseSelect("all")}>All</MenuItem>
+                    {uniqueCourses.map((course) => (
+                      <MenuItem key={course} onClick={() => handleCourseSelect(course)}>
+                        {course}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </Box>
+              </TableCell>
+
+              <TableCell>
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <strong>Status</strong>
+                  <IconButton onClick={handleStatusClick} size="small">
+                    <ArrowDropDownIcon fontSize="small" />
+                  </IconButton>
+                  <Menu anchorEl={statusAnchorEl} open={statusMenuOpen} onClose={handleStatusClose}>
+                    <MenuItem onClick={() => handleStatusSelect("all")}>All</MenuItem>
+                    <MenuItem onClick={() => handleStatusSelect("active")}>Active</MenuItem>
+                    <MenuItem onClick={() => handleStatusSelect("inactive")}>Inactive</MenuItem>
+                    <MenuItem onClick={() => handleStatusSelect("forverification")}>For Verification</MenuItem>
+                  </Menu>
+                </Box>
+              </TableCell>
+
+              <TableCell><strong></strong></TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {filteredChairs
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((chair, index) => (
+                <TableRow
+                  key={chair._id}
+                  sx={{
+                    backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    "&:hover": { backgroundColor: "#f1f1f1" }
+                  }}
+                >
+                  <TableCell>{`${chair.last_name}, ${chair.first_name} ${chair.middle_name ?? ""}`}</TableCell>
+                  <TableCell>{chair.email}</TableCell>
                   <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <strong>Status of Account</strong>
-                      <IconButton onClick={handleStatusClick} size="small">
-                        <ArrowDropDownIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                    <Menu
-                      anchorEl={statusAnchorEl}
-                      open={statusMenuOpen}
-                      onClose={handleStatusClose}
-                    >
-                      <MenuItem onClick={() => handleStatusSelect('all')}>
-                        All
-                      </MenuItem>
-                      <MenuItem onClick={() => handleStatusSelect('active')}>
-                        Active
-                      </MenuItem>
-                      <MenuItem onClick={() => handleStatusSelect('inactive')}>
-                        Inactive
-                      </MenuItem>
-                      <MenuItem onClick={() => handleStatusSelect('forverification')}>
-                        For Verification
-                      </MenuItem>
-                    </Menu>
+                    {chair.role === "programchairperson"
+                      ? "Program Chairperson"
+                      : chair.role.charAt(0).toUpperCase() + chair.role.slice(1)}
                   </TableCell>
-                  <TableCell><strong>View More</strong></TableCell>
-                  <TableCell><strong>Action</strong></TableCell>
+                  <TableCell>{chair.course}</TableCell>
+                  <TableCell>
+                    {chair.status === "forverification"
+                      ? "For Verification"
+                      : chair.status.charAt(0).toUpperCase() + chair.status.slice(1)}
+                  </TableCell>
+                  <TableCell>
+                    <IconButton onClick={(e) => handleActionMenuOpen(e, chair._id)}>
+                      <MoreHorizIcon />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredChairs.map((chair) => (
-                  <TableRow key={chair._id}>
-                    <TableCell>{`${chair.last_name}, ${chair.first_name} ${chair.middle_name ?? ''} `}</TableCell>
-                    <TableCell>{chair.email}</TableCell>
-                    <TableCell>
-                      {chair.role === "programchairperson"
-                        ? "Program Chairperson"
-                        : chair.role.charAt(0).toUpperCase() + chair.role.slice(1)}
-                    </TableCell>
-                    <TableCell>{chair.course.toLocaleUpperCase()}</TableCell>
-                    <TableCell>
-                      {chair.status === "forverification"
-                        ? "For Verification"
-                        : chair.status.charAt(0).toUpperCase() + chair.status.slice(1)}
-                    </TableCell>
-                    <TableCell>
-                    <>
-                        <IconButton color="primary" onClick={() => handleOpenInfoModal(chair)}>
-                          <InfoIcon />
-                        </IconButton>
+              ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-                        <InfoModal 
-                          open={openInfoModal} 
-                          onClose={handleCloseInfoModal}
-                          faculty={selectedFacultyInfo}
-                        />
-                      </>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton>
-                        <BlockIcon/>
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteAccount(chair._id)}>
-                        <DeleteIcon sx={{ color: 'red' }} />
-                      </IconButton>
-                      
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+      <TablePagination
+        component="div"
+        count={filteredChairs.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25]}
+      />
+
+      {/* Action menu */}
+      <Menu
+        anchorEl={actionAnchorEl}
+        open={Boolean(actionAnchorEl)}
+        onClose={handleActionMenuClose}
+      >
+        <MenuItem
+          onClick={() => {
+            console.log("Block user:", selectedChairId);
+            handleActionMenuClose();
+          }}
+        >
+          <BlockIcon fontSize="small" sx={{ mr: 1 }} /> Block
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (selectedChairId) handleDeleteAccount(selectedChairId);
+            handleActionMenuClose();
+          }}
+        >
+          <DeleteIcon fontSize="small" sx={{ color: "red", mr: 1 }} /> Delete
+        </MenuItem>
+      </Menu>
+    </Paper>
         </Grid>
       </Grid>
 

@@ -1,11 +1,11 @@
-import mongoose, { Document, Schema, Model, Types } from 'mongoose';
+import mongoose, { Document, Schema, Model, Types } from "mongoose";
 import "./College";
 
-export type UserRole = 
-  | 'superadmin'
-  | 'instructor'
-  | 'dean'
-  | 'programchairperson';
+export type UserRole =
+  | "superadmin"
+  | "instructor"
+  | "dean"
+  | "programchairperson";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -26,7 +26,8 @@ export interface IUser extends Document {
   role: UserRole;
   college?: mongoose.Types.ObjectId;
   course?: mongoose.Types.ObjectId;
-  status: 'forverification' | 'active' | 'inactive';
+  status: "forverification" | "active" | "inactive" | "permanent";
+  profilePhotoUrl: string;
 }
 
 const UserSchema: Schema<IUser> = new Schema({
@@ -47,7 +48,7 @@ const UserSchema: Schema<IUser> = new Schema({
   role: {
     type: String,
     required: true,
-    enum: ['superadmin', 'instructor', 'dean', 'programchairperson']
+    enum: ["superadmin", "instructor", "dean", "programchairperson"],
   },
   college: {
     type: mongoose.Schema.Types.ObjectId,
@@ -57,20 +58,19 @@ const UserSchema: Schema<IUser> = new Schema({
     },
   },
   course: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Course",
-  required: function (this: IUser) {
-    return this.role === 'instructor' || this.role === 'programchairperson';
-  }
-},
-
-  
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Course",
+    required: function (this: IUser) {
+      return this.role === "instructor" || this.role === "programchairperson";
+    },
+  },
   status: {
     type: String,
-    enum: ['forverification', 'active','inactive'],
-    default: 'forverification'
-  }
+    enum: ["forverification", "active", "inactive", "permanent"],
+    default: "forverification",
+  },
+  profilePhotoUrl: { type: String, default: "" },
 });
 
-const UserModel: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
+const UserModel: Model<IUser> = mongoose.model<IUser>("User", UserSchema);
 export default UserModel;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Grid,
   Paper,
@@ -25,18 +25,19 @@ import {
   Select,
   SelectChangeEvent,
   DialogActions,
-  Autocomplete
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+  Autocomplete,
+  TablePagination,
+  CircularProgress,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import Swal from 'sweetalert2';
-
-import axios from 'axios';
-import SuperadminMain from './SuperadminMain';
+import Swal from "sweetalert2";
+import axios from "axios";
+import SuperadminMain from "./SuperadminMain";
 
 interface College {
   _id: string;
@@ -45,197 +46,209 @@ interface College {
 }
 
 interface Dean {
-    _id: string;
-    first_name: string;
-    middle_name?: string;
-    last_name: string;
-    ext_name?: string;
-    username: string;
-    email: string;
-    role: string;
-    college?: College;
-    status: string;
-  }
-  
+  _id: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  ext_name?: string;
+  username: string;
+  email: string;
+  role: string;
+  college?: College;
+  status: string;
+}
 
 const DeanInfo: React.FC = () => {
   const [deans, setDeans] = useState<Dean[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const openStatusMenu = Boolean(statusAnchorEl);
   const [openModal, setOpenModal] = useState(false);
   const [colleges, setColleges] = useState<College[]>([]);
   const [collegeCourses, setCollegeCourses] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const random4Digit = (): string => {
     return Math.floor(1000 + Math.random() * 9000).toString();
   };
 
-const [newFaculty, setNewFaculty] = useState({
-  last_name: '',
-  first_name: '',
-  middle_name: '',
-  ext_name: '',
-  college: '',
-  username: '',
-  email: '',
-  password: random4Digit(),
-  role: 'dean',
-  highestEducationalAttainment: '',
-  academicRank: '',
-  statusOfAppointment: '',
-  numberOfPrep: 0,
-  totalTeachingLoad: 0,
-});
+  const [newFaculty, setNewFaculty] = useState({
+    last_name: "",
+    first_name: "",
+    middle_name: "",
+    ext_name: "",
+    college: "",
+    username: "",
+    email: "",
+    password: random4Digit(),
+    role: "dean",
+    highestEducationalAttainment: "",
+    academicRank: "",
+    statusOfAppointment: "",
+    numberOfPrep: 0,
+    totalTeachingLoad: 0,
+  });
 
-const [showPassword, setShowPassword] = useState(false);
-
-
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleStatusClick = (event: React.MouseEvent<HTMLElement>) => {
     setStatusAnchorEl(event.currentTarget);
   };
-  
+
   const handleStatusClose = (status: string | null = null) => {
     if (status) {
       setSelectedStatus(status);
     }
     setStatusAnchorEl(null);
   };
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewFaculty({ ...newFaculty, [e.target.name]: e.target.value });
   };
-  
+
   const handleRoleChange = (e: SelectChangeEvent<string>) => {
     setNewFaculty({ ...newFaculty, role: e.target.value });
   };
-  
-  
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-  
+
   const handleCloseModal = () => {
     setOpenModal(false);
   };
-  
+
   const handleAddAccount = async () => {
     try {
-      const requiredFields = ['last_name', 'first_name', 'college', 'email'];
+      const requiredFields = ["last_name", "first_name", "college", "email"];
       for (const field of requiredFields) {
         if (!newFaculty[field as keyof typeof newFaculty]) {
           Swal.fire({
-            icon: 'warning',
-            title: 'Missing Field',
-            text: `Please fill out the ${field.replace('_', ' ')} field.`,
+            icon: "warning",
+            title: "Missing Field",
+            text: `Please fill out the ${field.replace("_", " ")} field.`,
           });
           return;
         }
       }
-  
-      const response = await axios.post('http://localhost:5000/api/superadmin/faculty', newFaculty);
-  
+
+      const response = await axios.post(
+        "http://localhost:5000/api/superadmin/faculty",
+        newFaculty
+      );
+
       // Add new dean to the list
       setDeans((prev) => [...prev, response.data]);
-  
+
       // Reset form and close modal
       setNewFaculty({
-        last_name: '',
-        first_name: '',
-        middle_name: '',
-        ext_name: '',
-        college: '',
-        username: '',
-        email: '',
-        password: '',
-        role: 'dean',
-        highestEducationalAttainment: '',
-        academicRank: '',
-        statusOfAppointment: '',
+        last_name: "",
+        first_name: "",
+        middle_name: "",
+        ext_name: "",
+        college: "",
+        username: "",
+        email: "",
+        password: "",
+        role: "dean",
+        highestEducationalAttainment: "",
+        academicRank: "",
+        statusOfAppointment: "",
         numberOfPrep: 0,
         totalTeachingLoad: 0,
       });
       setOpenModal(false);
-  
+
       Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Dean account successfully created and email sent!',
+        icon: "success",
+        title: "Success",
+        text: "Dean account successfully created and email sent!",
       });
     } catch (error: any) {
-      console.error('Error adding dean account:', error);
+      console.error("Error adding dean account:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.response?.data?.message || 'An error occurred while adding the dean.',
+        icon: "error",
+        title: "Error",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while adding the dean.",
       });
     }
   };
 
   const handleDeleteDean = async (id: string) => {
     const result = await Swal.fire({
-      title: 'Are you sure?',
+      title: "Are you sure?",
       text: "This action cannot be undone!",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!',
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
     });
-  
+
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/superadmin/faculty/${id}`);
-  
-        setDeans(prev => prev.filter(dean => dean._id !== id));
-  
+        await axios.delete(
+          `http://localhost:5000/api/superadmin/faculty/${id}`
+        );
+
+        setDeans((prev) => prev.filter((dean) => dean._id !== id));
+
         Swal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: 'Dean account has been deleted.',
+          icon: "success",
+          title: "Deleted!",
+          text: "Dean account has been deleted.",
         });
       } catch (error: any) {
-        console.error('Error deleting dean:', error);
+        console.error("Error deleting dean:", error);
         Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.response?.data?.message || 'An error occurred while deleting the dean.',
+          icon: "error",
+          title: "Error",
+          text:
+            error.response?.data?.message ||
+            "An error occurred while deleting the dean.",
         });
       }
     }
   };
-  
-  
+
   const generateUsername = (firstName: string, lastName: string) => {
-      const first = firstName.substring(0, 3).toUpperCase();
-      const last = lastName.substring(0, 3).toUpperCase();
-      return last + first;
-    };
-    
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        if (newFaculty.first_name && newFaculty.last_name) {
-          const username = generateUsername(newFaculty.first_name, newFaculty.last_name);
-          setNewFaculty(prev => ({ ...prev, username }));
-        }
-      }, 2000);
-    
-      return () => clearTimeout(timer);
-    }, [newFaculty.first_name, newFaculty.last_name]);
-  
+    const first = firstName.substring(0, 3).toUpperCase();
+    const last = lastName.substring(0, 3).toUpperCase();
+    return last + first;
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (newFaculty.first_name && newFaculty.last_name) {
+        const username = generateUsername(
+          newFaculty.first_name,
+          newFaculty.last_name
+        );
+        setNewFaculty((prev) => ({ ...prev, username }));
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [newFaculty.first_name, newFaculty.last_name]);
 
   useEffect(() => {
     const fetchColleges = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/api/superadmin/all-colleges');
-        console.log('Fetched colleges:', response.data);
+        const response = await axios.get(
+          "http://localhost:5000/api/superadmin/all-colleges"
+        );
+        console.log("Fetched colleges:", response.data);
         setColleges(response.data);
       } catch (error) {
-        console.error('Error fetching colleges:', error);
+        console.error("Error fetching colleges:", error);
       } finally {
         setLoading(false);
       }
@@ -246,30 +259,34 @@ const [showPassword, setShowPassword] = useState(false);
 
   const fetchCoursesByCollege = async (collegeCode: string) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/superadmin/courses/by-college`, {
-        params: { collegeCode }
-      });
+      const response = await axios.get(
+        `http://localhost:5000/api/superadmin/courses/by-college`,
+        {
+          params: { collegeCode },
+        }
+      );
       // response.data = [{ name, code }, ...]
-      const courseCodes = response.data.map((course: { code: string }) => course.code);
+      const courseCodes = response.data.map(
+        (course: { code: string }) => course.code
+      );
       setCollegeCourses(courseCodes);
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error("Error fetching courses:", error);
       setCollegeCourses([]);
     }
   };
-  
-  
-  
 
   useEffect(() => {
     const fetchDeans = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/superadmin/dean');
+        const response = await axios.get(
+          "http://localhost:5000/api/superadmin/dean"
+        );
         setDeans(response.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching deans:', error);
-        setError('Failed to fetch deans');
+        console.error("Error fetching deans:", error);
+        setError("Failed to fetch deans");
         setLoading(false);
       }
     };
@@ -277,108 +294,221 @@ const [showPassword, setShowPassword] = useState(false);
     fetchDeans();
   }, []);
 
-  const filteredDeans = deans.filter(dean => {
-    return selectedStatus === 'all' || dean.status === selectedStatus;
+  const filteredDeans = deans.filter((dean) => {
+    return selectedStatus === "all" || dean.status === selectedStatus;
   });
-  
+
+  const handleChangePage = (
+    _event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedDeans = filteredDeans.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <SuperadminMain>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h4" fontWeight="bold" color="#333">
-          List of Dean/s
-        </Typography>
+      <Grid
+        container
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={2}
+        mb={3}
+      >
+        <Grid item xs={12} md={4}>
+          <Typography variant="h4" fontWeight="bold">
+            List of Dean/s
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mt={0.5}>
+            This section contains a list of all current deans across departments
+            and their respective information.
+          </Typography>
+        </Grid>
 
-        <Box display="flex" alignItems="center" justifyContent="center" flex={1}>
+        <Grid item xs={12} md={5} display="flex" justifyContent="center">
           <TextField
             size="small"
-            placeholder="Search..."
+            placeholder="Search by name, username, or email..."
             variant="outlined"
+            fullWidth
             onChange={(e) => {
-              // handle search
               console.log(e.target.value);
             }}
-            sx={{ width: '300px' }}
+            sx={{ maxWidth: 350 }}
           />
-        </Box>
+        </Grid>
 
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenModal(true)}
-          sx={{ marginLeft: '16px', whiteSpace: 'nowrap' }}
-        >
-          Add
-        </Button>
-      </Box>
+        <Grid item xs={12} md={3} display="flex" justifyContent="flex-end">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenModal(true)}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            Add Dean
+          </Button>
+        </Grid>
+      </Grid>
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          {loading ? (
-            <div>Loading...</div>
-          ) : error ? (
-            <div style={{ color: 'red' }}>{error}</div>
-          ) : (
-            <TableContainer component={Paper} sx={{ width: '100%' }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Full Name</strong></TableCell>
-                    <TableCell><strong>Username</strong></TableCell>
-                    <TableCell><strong>Email</strong></TableCell>
-                    <TableCell><strong>College</strong></TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" sx={{ cursor: 'pointer' }} onClick={handleStatusClick}>
-                        <strong>Status of Account</strong>
-                        <ArrowDropDownIcon />
-                      </Box>
-
-                      <Menu
-                        anchorEl={statusAnchorEl}
-                        open={openStatusMenu}
-                        onClose={() => handleStatusClose()}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          <TableContainer
+            component={Paper}
+            sx={{ borderRadius: 3, boxShadow: 3 }}
+          >
+            <Table>
+              <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+                <TableRow>
+                  <TableCell>
+                    <strong>Full Name</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Username</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Email</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>College</strong>
+                  </TableCell>
+                  <TableCell>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      sx={{ cursor: "pointer" }}
+                      onClick={handleStatusClick}
+                    >
+                      <strong>Status of Account</strong>
+                      <ArrowDropDownIcon />
+                    </Box>
+                    <Menu
+                      anchorEl={statusAnchorEl}
+                      open={openStatusMenu}
+                      onClose={() => handleStatusClose()}
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "left",
+                      }}
+                      transformOrigin={{
+                        vertical: "top",
+                        horizontal: "left",
+                      }}
+                    >
+                      <MenuItem onClick={() => handleStatusClose("all")}>
+                        All
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleStatusClose("forverification")}
                       >
-                        <MenuItem onClick={() => handleStatusClose('all')}>All</MenuItem>
-                        <MenuItem onClick={() => handleStatusClose('forverification')}>For Verification</MenuItem>
-                        <MenuItem onClick={() => handleStatusClose('active')}>Active</MenuItem>
-                        <MenuItem onClick={() => handleStatusClose('inactive')}>Inactive</MenuItem>
-                      </Menu>
-                    </TableCell>
-                    <TableCell><strong>Action</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                {filteredDeans.map((dean) => (
-                  <TableRow key={dean._id}>
-                    <TableCell>{`${dean.last_name}, ${dean.first_name} ${dean.middle_name ? dean.middle_name.charAt(0) + '.' : ''} ${dean.ext_name}`}</TableCell>
-                    <TableCell>{dean.username}</TableCell>
-                    <TableCell>{dean.email}</TableCell>
-                    <TableCell>{dean.college?.name || 'N/A'}</TableCell>
-                    <TableCell>
-                      {dean.status === 'forverification'
-                        ? 'For Verification'
-                        : dean.status.charAt(0).toUpperCase() + dean.status.slice(1)}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton color="primary" onClick={() => console.log('Edit', dean._id)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleDeleteDean(dean._id)}>
-                        <DeleteIcon />
-                      </IconButton>
+                        For Verification
+                      </MenuItem>
+                      <MenuItem onClick={() => handleStatusClose("active")}>
+                        Active
+                      </MenuItem>
+                      <MenuItem onClick={() => handleStatusClose("inactive")}>
+                        Inactive
+                      </MenuItem>
+                    </Menu>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Action</strong>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <CircularProgress size={24} />
+                      <Typography variant="body2" color="textSecondary" mt={2}>
+                        Loading data...
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+                ) : error ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      align="center"
+                      sx={{ py: 4, color: "red" }}
+                    >
+                      {error}
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedDeans.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      No dean records found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedDeans.map((dean) => (
+                    <TableRow key={dean._id} hover>
+                      <TableCell>{`${dean.last_name}, ${dean.first_name} ${
+                        dean.middle_name ? dean.middle_name.charAt(0) + "." : ""
+                      } ${dean.ext_name || ""}`}</TableCell>
+                      <TableCell>{dean.username}</TableCell>
+                      <TableCell>{dean.email}</TableCell>
+                      <TableCell>{dean.college?.name || "N/A"}</TableCell>
+                      <TableCell>
+                        {dean.status === "forverification"
+                          ? "For Verification"
+                          : dean.status.charAt(0).toUpperCase() +
+                            dean.status.slice(1)}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          color="primary"
+                          onClick={() => console.log("Edit", dean._id)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteDean(dean._id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {/* Pagination */}
+            {!loading && !error && filteredDeans.length > 0 && (
+              <TablePagination
+                component="div"
+                count={filteredDeans.length}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                sx={{ px: 2 }}
+              />
+            )}
+          </TableContainer>
         </Grid>
       </Grid>
-      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
+      <Dialog
+        open={openModal}
+        onClose={handleCloseModal}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Add Faculty Account</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={1}>
@@ -421,13 +551,22 @@ const [showPassword, setShowPassword] = useState(false);
               />
               <Autocomplete
                 options={colleges.map((college) => college.code)}
-                value={newFaculty.college || ''}
+                value={newFaculty.college || ""}
                 onChange={(event, newValue) => {
-                  setNewFaculty((prev) => ({ ...prev, college: newValue || '', course: '' }));
+                  setNewFaculty((prev) => ({
+                    ...prev,
+                    college: newValue || "",
+                    course: "",
+                  }));
                   if (newValue) fetchCoursesByCollege(newValue);
                 }}
                 renderInput={(params) => (
-                  <TextField {...params} label="College" margin="dense" fullWidth />
+                  <TextField
+                    {...params}
+                    label="College"
+                    margin="dense"
+                    fullWidth
+                  />
                 )}
                 freeSolo
                 disableClearable
@@ -439,7 +578,11 @@ const [showPassword, setShowPassword] = useState(false);
               item
               xs={12}
               sm={2}
-              sx={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "stretch",
+              }}
             >
               <Divider orientation="vertical" flexItem />
             </Grid>
@@ -470,7 +613,7 @@ const [showPassword, setShowPassword] = useState(false);
                 fullWidth
                 label="Password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={newFaculty.password}
                 onChange={handleInputChange}
                 margin="dense"
@@ -502,12 +645,15 @@ const [showPassword, setShowPassword] = useState(false);
 
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button onClick={handleAddAccount} variant="contained" color="primary">
+          <Button
+            onClick={handleAddAccount}
+            variant="contained"
+            color="primary"
+          >
             Add
           </Button>
         </DialogActions>
       </Dialog>
-
     </SuperadminMain>
   );
 };
