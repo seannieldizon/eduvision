@@ -91,7 +91,7 @@ const FacultySchedule: React.FC = () => {
         if (!facultyId || !selectedLab) return;
   
         const { data } = await axios.get(
-          `http://localhost:5000/api/auth/faculty-schedules/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/faculty-schedules/${facultyId}`
         );
   
         const filteredSchedules = data.filter(
@@ -160,7 +160,7 @@ const FacultySchedule: React.FC = () => {
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/auth/rooms");
+        const { data } = await axios.get("https://eduvision-dura.onrender.com/api/auth/rooms");
         setLabs(data);
         if (data.length > 0 && !selectedLab) {
           setSelectedLab(data[0].name);

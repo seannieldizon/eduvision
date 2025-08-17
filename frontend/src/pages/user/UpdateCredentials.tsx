@@ -39,7 +39,7 @@ export default function UpdateCredentials() {
     setLoading(true);
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/auth/update-credentials/${id}`,
+        `https://eduvision-dura.onrender.com/api/auth/update-credentials/${id}`,
         {
           username: credentials.username,
           password: credentials.newPassword,

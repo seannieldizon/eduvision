@@ -108,7 +108,7 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
 
   const handleSubmit = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/schedules", formData);
+      const res = await axios.post("https://eduvision-dura.onrender.com/api/auth/schedules", formData);
       console.log("Schedule created:", res.data);
       
       Swal.fire({
@@ -133,7 +133,7 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const res = await axios.get<Subject[]>("http://localhost:5000/api/auth/subjects");
+        const res = await axios.get<Subject[]>("https://eduvision-dura.onrender.com/api/auth/subjects");
         setSubjects(res.data);
       } catch (err) {
         console.error("Failed to fetch subjects", err);
@@ -146,7 +146,7 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get<Room[]>("http://localhost:5000/api/auth/rooms");
+        const res = await axios.get<Room[]>("https://eduvision-dura.onrender.com/api/auth/rooms");
         setRooms(res.data);
       } catch (error) {
         console.error("Failed to fetch rooms", error);
@@ -159,7 +159,7 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const res = await axios.get<Section[]>("http://localhost:5000/api/auth/sections");
+        const res = await axios.get<Section[]>("https://eduvision-dura.onrender.com/api/auth/sections");
         setSections(res.data);
       } catch (error) {
         console.error("Failed to fetch sections", error);
@@ -172,7 +172,7 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   useEffect(() => {
     const fetchSemesters = async () => {
       try {
-        const res = await axios.get<Semester[]>("http://localhost:5000/api/auth/all-semester");
+        const res = await axios.get<Semester[]>("https://eduvision-dura.onrender.com/api/auth/all-semester");
         setSemesters(res.data);
       } catch (error) {
         console.error("Error fetching semesters:", error);

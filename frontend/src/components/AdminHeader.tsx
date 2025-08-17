@@ -16,7 +16,7 @@ const AdminHeader: React.FC = () => {
   useEffect(() => {
     const fetchUserName = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/auth/user/name`, {
+        const response = await axios.get(`https://eduvision-dura.onrender.com/api/auth/user/name`, {
           params: { name: name }
         });
         console.log("User name response:", response.data);

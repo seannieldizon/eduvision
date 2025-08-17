@@ -129,7 +129,7 @@ const ProgramchairInfo: React.FC = () => {
         }
     
         try {
-          const response = await axios.post("http://localhost:5000/api/auth/college-courses", { collegeCode });
+          const response = await axios.post("https://eduvision-dura.onrender.com/api/auth/college-courses", { collegeCode });
           setCourses(response.data.courses); // <--- here
         } catch (err: any) {
           console.error("Failed to fetch courses:", err.response?.data?.message || err.message);
@@ -142,7 +142,7 @@ const ProgramchairInfo: React.FC = () => {
 
     const fetchProgramChairs = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/auth/programchairs`, {
+        const res = await axios.get(`https://eduvision-dura.onrender.com/api/auth/programchairs`, {
           params: { collegeCode },
         });
         setProgramChairs(res.data);
@@ -299,7 +299,7 @@ const ProgramchairInfo: React.FC = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/faculty", newFaculty);
+      const res = await axios.post("https://eduvision-dura.onrender.com/api/auth/faculty", newFaculty);
       setFacultyList([...facultyList, res.data]);
       Swal.fire({ icon: "success", title: "Success", text: "Faculty account added successfully!" });
       handleCloseModal();
@@ -323,7 +323,7 @@ const ProgramchairInfo: React.FC = () => {
 
     if (confirmation.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/auth/faculty/${id}`);
+        await axios.delete(`https://eduvision-dura.onrender.com/api/auth/faculty/${id}`);
         setFacultyList(facultyList.filter((faculty) => faculty._id !== id));
         if (selectedFaculty === id) {
           setSelectedFaculty(null);

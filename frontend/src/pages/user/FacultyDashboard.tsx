@@ -42,7 +42,7 @@ const FacultyDashboard: React.FC = () => {
     const fetchLogs = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/auth/logs/all/today/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/logs/all/today/${facultyId}`
         );
         setLogs(res.data);
       } catch (error) {
@@ -59,7 +59,7 @@ const FacultyDashboard: React.FC = () => {
         if (!facultyId) return;
 
         const response = await axios.get(
-          `http://localhost:5000/api/auth/expected-hours/today/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/expected-hours/today/${facultyId}`
         );
 
         const {
@@ -83,7 +83,7 @@ const FacultyDashboard: React.FC = () => {
     const fetchNextSchedule = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/auth/next-schedule/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/next-schedule/${facultyId}`
         );
         setNextSchedule(response.data);
       } catch (error) {
@@ -148,7 +148,7 @@ const FacultyDashboard: React.FC = () => {
         console.log("Fetching today's schedules for facultyId:", facultyId);
 
         const response = await axios.get(
-          `http://localhost:5000/api/auth/schedules/today/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/schedules/today/${facultyId}`
         );
 
         console.log("Raw API response:", response);
@@ -176,7 +176,7 @@ const FacultyDashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/auth/logs/today/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/logs/today/${facultyId}`
         );
         setToday(res.data.totalTodayHours || 0);
         setWeek(res.data.totalWeekHours || 0);

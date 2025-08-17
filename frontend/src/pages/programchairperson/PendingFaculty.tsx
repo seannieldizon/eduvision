@@ -49,7 +49,7 @@ const PendingFaculty: React.FC = () => {
     const fetchFaculty = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/auth/initial-faculty",
+          "https://eduvision-dura.onrender.com/api/auth/initial-faculty",
           {
             params: { courseName: CourseName },
           }
@@ -93,7 +93,7 @@ const PendingFaculty: React.FC = () => {
         });
 
         const response = await axios.put(
-          `http://localhost:5000/api/auth/approve-faculty/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/approve-faculty/${facultyId}`
         );
         console.log(response.data);
 
@@ -144,7 +144,7 @@ const PendingFaculty: React.FC = () => {
         });
 
         const response = await axios.put(
-          `http://localhost:5000/api/auth/reject-faculty/${facultyId}`
+          `https://eduvision-dura.onrender.com/api/auth/reject-faculty/${facultyId}`
         );
         console.log(response.data);
 

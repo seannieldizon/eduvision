@@ -50,7 +50,7 @@ const ProgramChairInfoOnly: React.FC = () => {
     const fetchInstructorInfo = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/superadmin/instructorinfo-only"
+          "https://eduvision-dura.onrender.com/api/superadmin/instructorinfo-only"
         );
         setInstructorInfo(response.data);
         setLoading(false);

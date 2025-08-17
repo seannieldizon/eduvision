@@ -134,7 +134,7 @@ const DeanInfo: React.FC = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/superadmin/faculty",
+        "https://eduvision-dura.onrender.com/api/superadmin/faculty",
         newFaculty
       );
 
@@ -191,7 +191,7 @@ const DeanInfo: React.FC = () => {
     if (result.isConfirmed) {
       try {
         await axios.delete(
-          `http://localhost:5000/api/superadmin/faculty/${id}`
+          `https://eduvision-dura.onrender.com/api/superadmin/faculty/${id}`
         );
 
         setDeans((prev) => prev.filter((dean) => dean._id !== id));
@@ -239,7 +239,7 @@ const DeanInfo: React.FC = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/superadmin/all-colleges"
+          "https://eduvision-dura.onrender.com/api/superadmin/all-colleges"
         );
         console.log("Fetched colleges:", response.data);
         setColleges(response.data);
@@ -256,7 +256,7 @@ const DeanInfo: React.FC = () => {
   const fetchCoursesByCollege = async (collegeCode: string) => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/superadmin/courses/by-college`,
+        `https://eduvision-dura.onrender.com/api/superadmin/courses/by-college`,
         {
           params: { collegeCode },
         }
@@ -276,7 +276,7 @@ const DeanInfo: React.FC = () => {
     const fetchDeans = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/superadmin/dean"
+          "https://eduvision-dura.onrender.com/api/superadmin/dean"
         );
         setDeans(response.data);
         setLoading(false);

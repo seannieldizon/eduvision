@@ -101,7 +101,7 @@ const DeanDashboard: React.FC = () => {
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const response = await axios.post("http://localhost:5000/api/auth/dean/all-schedules/today", {
+        const response = await axios.post("https://eduvision-dura.onrender.com/api/auth/dean/all-schedules/today", {
           shortCourseValue: shortCourseValue
         });
         console.log("Received all schedules data:", response.data);
@@ -117,7 +117,7 @@ const DeanDashboard: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/all-courses/college", {
+        const response = await axios.get("https://eduvision-dura.onrender.com/api/auth/all-courses/college", {
           params: { CollegeName },
         });
         console.log("Courses fetched:", response.data);
@@ -135,7 +135,7 @@ const DeanDashboard: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/all-rooms/college", {
+        const response = await axios.get("https://eduvision-dura.onrender.com/api/auth/all-rooms/college", {
           params: { CollegeName },
         });
         console.log("Rooms fetched:", response.data);
@@ -153,7 +153,7 @@ const DeanDashboard: React.FC = () => {
   useEffect(() => {
     const fetchInstructorCount = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/count-all/instructors", {
+        const response = await axios.get("https://eduvision-dura.onrender.com/api/auth/count-all/instructors", {
           params: { CollegeName }
         });
   
@@ -234,7 +234,7 @@ const DeanDashboard: React.FC = () => {
   useEffect(() => {
     const fetchAllFacultiesLogs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/logs/all-faculties/today", {
+        const res = await axios.get("https://eduvision-dura.onrender.com/api/auth/logs/all-faculties/today", {
           params: {
             courseName: CourseName,
           },

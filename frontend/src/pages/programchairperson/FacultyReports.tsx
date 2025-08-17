@@ -63,7 +63,7 @@ const FacultyReports: React.FC = () => {
     const fetchData = async () => {
       try {
         const response = await axios.post(
-          "http://localhost:5000/api/auth/show-daily-report",
+          "https://eduvision-dura.onrender.com/api/auth/show-daily-report",
           {
             CourseName,
           }
@@ -82,7 +82,7 @@ const FacultyReports: React.FC = () => {
   const handleGenerateReport = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/generate-daily-report",
+        "https://eduvision-dura.onrender.com/api/auth/generate-daily-report",
         { CourseName: CourseName },
         { responseType: "blob" }
       );

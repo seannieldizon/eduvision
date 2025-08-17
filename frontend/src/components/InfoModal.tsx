@@ -95,7 +95,7 @@ const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
 
       try {
         const { data } = await axios.post(
-          "http://localhost:5000/api/auth/uploadScheduleDocument",
+          "https://eduvision-dura.onrender.com/api/auth/uploadScheduleDocument",
           formData,
           {
             headers: {
@@ -156,7 +156,7 @@ const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
         });
 
         if (confirmResult.isConfirmed) {
-          await axios.post("http://localhost:5000/api/auth/confirmSchedules", {
+          await axios.post("https://eduvision-dura.onrender.com/api/auth/confirmSchedules", {
             schedules: scheduleData,
           });
 
@@ -191,7 +191,7 @@ const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
 
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/auth/schedules-faculty",
+          "https://eduvision-dura.onrender.com/api/auth/schedules-faculty",
           {
             params: { facultyId: faculty._id },
           }
@@ -214,7 +214,7 @@ const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
 
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/auth/logs/faculty-today",
+          "https://eduvision-dura.onrender.com/api/auth/logs/faculty-today",
           {
             params: { facultyId: faculty._id },
           }
@@ -275,7 +275,7 @@ const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/upload-faculty-profile-photo",
+        "https://eduvision-dura.onrender.com/api/auth/upload-faculty-profile-photo",
         formData,
         {
           headers: {

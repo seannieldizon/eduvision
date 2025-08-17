@@ -88,7 +88,7 @@ const DeanLiveVideo: React.FC = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/logs/today');
+        const response = await axios.get('https://eduvision-dura.onrender.com/api/auth/logs/today');
         console.log('Fetched logs:', response.data);
         setLogs(response.data);
       } catch (error) {
@@ -132,7 +132,7 @@ const DeanLiveVideo: React.FC = () => {
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const response = await axios.post("http://localhost:5000/api/auth/all-schedules/today", {
+        const response = await axios.post("https://eduvision-dura.onrender.com/api/auth/all-schedules/today", {
           shortCourseName: ShortCourseName
         });
         console.log("Received today data:", response.data);
@@ -148,7 +148,7 @@ const DeanLiveVideo: React.FC = () => {
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/rooms");
+        const response = await axios.get("https://eduvision-dura.onrender.com/api/auth/rooms");
         setLabs(response.data);
 
         if (response.data.length > 0 && !selectedLab) {

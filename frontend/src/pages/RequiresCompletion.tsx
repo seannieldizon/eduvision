@@ -55,7 +55,7 @@ const RequiresCompletion: React.FC = () => {
           }
         });
 
-        const response = await axios.post("http://localhost:5000/api/accountcompletion/save-user-info", formData);
+        const response = await axios.post("https://eduvision-dura.onrender.com/api/accountcompletion/save-user-info", formData);
         console.log(response);
 
         const userId = response.data?.userId;
@@ -123,7 +123,7 @@ const RequiresCompletion: React.FC = () => {
   const userId = localStorage.getItem("userId");
 
   if (userId) {
-    axios.post("http://localhost:5000/api/accountcompletion/temp-account-info", { userId })
+    axios.post("https://eduvision-dura.onrender.com/api/accountcompletion/temp-account-info", { userId })
       .then(response => {
         console.log("Response from backend:", response.data);
         setFormData((prev) => ({

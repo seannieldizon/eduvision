@@ -55,7 +55,7 @@ const ProgramChairInfoOnly: React.FC = () => {
     const fetchProgramChairInfo = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/superadmin/programchairinfo-only"
+          "https://eduvision-dura.onrender.com/api/superadmin/programchairinfo-only"
         );
         console.log("Fetched program chair info:", response.data);
 

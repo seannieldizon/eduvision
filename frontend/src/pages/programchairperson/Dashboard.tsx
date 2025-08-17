@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
     const fetchSchedules = async () => {
       try {
         const response = await axios.post(
-          "http://localhost:5000/api/auth/all-schedules/today",
+          "https://eduvision-dura.onrender.com/api/auth/all-schedules/today",
           {
             shortCourseName: ShortCourseName,
           }
@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
     const fetchInstructorCount = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/auth/count/instructors`,
+          `https://eduvision-dura.onrender.com/api/auth/count/instructors`,
           {
             params: { course: CourseName },
           }
@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
     const fetchSchedulesCountToday = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/auth/schedules-count/today`,
+          `https://eduvision-dura.onrender.com/api/auth/schedules-count/today`,
           {
             params: { course: CourseName },
           }
@@ -201,7 +201,7 @@ const Dashboard: React.FC = () => {
         console.log("Sending request to fetch logs for course:", CourseName);
 
         const res = await axios.get(
-          "http://localhost:5000/api/auth/logs/all-faculties/today",
+          "https://eduvision-dura.onrender.com/api/auth/logs/all-faculties/today",
           {
             params: {
               courseName: CourseName,

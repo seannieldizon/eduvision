@@ -102,7 +102,7 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchUserCounts = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/superadmin/user-counts"
+          "https://eduvision-dura.onrender.com/api/superadmin/user-counts"
         );
         setCounts(res.data);
       } catch (error) {
@@ -117,7 +117,7 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchSchedules = async () => {
       try {
         const response = await axios.post(
-          "http://localhost:5000/api/superadmin/dean/all-schedules/today",
+          "https://eduvision-dura.onrender.com/api/superadmin/dean/all-schedules/today",
           {
             shortCourseValue: shortCourseValue,
           }
@@ -136,7 +136,7 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchCourses = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/superadmin/all-courses/college",
+          "https://eduvision-dura.onrender.com/api/superadmin/all-courses/college",
           {
             params: { CollegeName },
           }
@@ -157,7 +157,7 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchCourses = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/superadmin/all-rooms/college",
+          "https://eduvision-dura.onrender.com/api/superadmin/all-rooms/college",
           {
             params: { CollegeName },
           }
@@ -237,7 +237,7 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchAllFacultiesLogs = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/superadmin/logs/all-faculties/today",
+          "https://eduvision-dura.onrender.com/api/superadmin/logs/all-faculties/today",
           {
             params: {
               courseName: CourseName,

@@ -29,7 +29,7 @@ export const FacultyProvider: React.FC<{ children: ReactNode }> = ({ children })
       try {
         const CourseName = localStorage.getItem("course") ?? "";
   
-        const res = await axios.get("http://localhost:5000/api/auth/faculty", {
+        const res = await axios.get("https://eduvision-dura.onrender.com/api/auth/faculty", {
           params: { courseName: CourseName },
         });
   

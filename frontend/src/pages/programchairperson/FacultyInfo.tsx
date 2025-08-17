@@ -158,7 +158,7 @@ const FacultyInfo: React.FC = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/faculty",
+        "https://eduvision-dura.onrender.com/api/auth/faculty",
         newFaculty
       );
       setFacultyList([...facultyList, res.data]);
@@ -197,7 +197,7 @@ const FacultyInfo: React.FC = () => {
 
     if (confirmation.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/auth/faculty/${id}`);
+        await axios.delete(`https://eduvision-dura.onrender.com/api/auth/faculty/${id}`);
         setFacultyList(facultyList.filter((faculty) => faculty._id !== id));
         if (selectedFaculty === id) {
           setSelectedFaculty(null);
@@ -399,17 +399,19 @@ const FacultyInfo: React.FC = () => {
                     <TableCell>
                       <Box display="flex" alignItems="center">
                         <Avatar
-  src={faculty.profilePhotoUrl || undefined}
-  sx={{
-    bgcolor: faculty.profilePhotoUrl ? "transparent" : "#90caf9",
-    width: 32,
-    height: 32,
-    mr: 1,
-  }}
->
-  {!faculty.profilePhotoUrl && faculty.first_name.charAt(0)}
-</Avatar>
-
+                          src={faculty.profilePhotoUrl || undefined}
+                          sx={{
+                            bgcolor: faculty.profilePhotoUrl
+                              ? "transparent"
+                              : "#90caf9",
+                            width: 32,
+                            height: 32,
+                            mr: 1,
+                          }}
+                        >
+                          {!faculty.profilePhotoUrl &&
+                            faculty.first_name.charAt(0)}
+                        </Avatar>
                       </Box>
                     </TableCell>
 
