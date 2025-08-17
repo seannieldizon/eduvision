@@ -46,15 +46,6 @@ interface Semester {
   isActive?: boolean;
 }
 
-interface Faculty {
-  _id: string;
-  first_name: string;
-  middle_name?: string;
-  last_name: string;
-  // Add other fields if needed
-}
-
-
 const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   open,
   onClose,
@@ -101,7 +92,6 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
-  const [facultyList, setFacultyList] = useState<Faculty[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -190,28 +180,6 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
     };
 
     fetchSemesters();
-  }, []);
-
-  useEffect(() => {
-    const courseName = localStorage.getItem("course");
-
-    if (!courseName) {
-      console.error("Course name is not found in local storage.");
-      return;
-    }
-
-    const fetchFaculty = async () => {
-      try {
-        const response = await axios.get<Faculty[]>(
-          `http://localhost:5000/api/auth/faculty?courseName=${encodeURIComponent(courseName)}`
-        );
-        setFacultyList(response.data);
-      } catch (err) {
-        console.error("Error fetching faculty:", err);
-      }
-    };
-
-    fetchFaculty();
   }, []);
 
   return (

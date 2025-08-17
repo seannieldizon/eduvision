@@ -25,12 +25,10 @@ import {
   SelectChangeEvent,
   Menu,
   Autocomplete,
-  Tooltip,
   TablePagination
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import InfoIcon from '@mui/icons-material/Info';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -40,7 +38,6 @@ import BlockIcon from '@mui/icons-material/Block';
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import axios from 'axios';
 import DeanMain from './DeanMain';
-import InfoModal from '../../components/InfoModal';
 
 
 interface ProgramChair {
@@ -92,10 +89,6 @@ const ProgramchairInfo: React.FC = () => {
   const roleMenuOpen = Boolean(roleAnchorEl);
   const courseMenuOpen = Boolean(courseAnchorEl);
   const statusMenuOpen = Boolean(statusAnchorEl);
-  const [openInfoModal, setOpenInfoModal] = useState(false);
-  const [selectedFacultyInfo, setSelectedFacultyInfo] = useState<any>(null);
-  const [selectedChair, setSelectedChair] = useState<string | null>(null);
-  const chairOptions = programChairs.map(chair => `${chair.first_name} ${chair.last_name}`);
   const [courses, setCourses] = useState<Course[]>([]);
   
 
@@ -125,18 +118,6 @@ const ProgramchairInfo: React.FC = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
-
-  
-    const handleOpenInfoModal = (faculty: any) => {
-      setSelectedFacultyInfo(faculty);
-      setOpenInfoModal(true);
-    };
-  
-    const handleCloseInfoModal = () => {
-      setSelectedFacultyInfo(null);
-      setOpenInfoModal(false);
-    };
 
     useEffect(() => {
       const fetchCourses = async () => {
@@ -615,7 +596,7 @@ const ProgramchairInfo: React.FC = () => {
             options={courses.map(course => course.code)}
             getOptionLabel={(option) => option}
             value={newFaculty.course || null}
-            onChange={(event, newValue) => {
+            onChange={(_, newValue) => {
               setNewFaculty(prev => ({ ...prev, course: newValue || "" }));
             }}
             renderInput={(params) => (

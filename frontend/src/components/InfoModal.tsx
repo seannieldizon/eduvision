@@ -59,24 +59,14 @@ interface Schedule {
   room: string;
 }
 
-interface Semester {
-  semesterName: string;
-  academicYear: string;
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean;
-}
-
 const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
   const [schedules, setSchedules] = useState([]);
-  const [semesters, setSemesters] = useState<Semester[]>([]);
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const today = new Date();
   const startDate = new Date(today.getFullYear(), 0, 1);
   const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const [openAddManualModal, setOpenAddManualModal] = useState(false);
-  const [expanded, setExpanded] = useState(false);
 
   const handleOpenAddManual = () => setOpenAddManualModal(true);
   const handleCloseAddManual = () => setOpenAddManualModal(false);
@@ -193,22 +183,6 @@ const InfoModal: React.FC<ModalProps> = ({ open, onClose, faculty }) => {
       }
     }
   };
-
-  useEffect(() => {
-    const fetchSemesters = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/api/auth/all-semester"
-        );
-        console.log("Received schedule semester:", response.data);
-        setSemesters(response.data);
-      } catch (error) {
-        console.error("Error fetching semester:", error);
-      }
-    };
-
-    fetchSemesters();
-  }, []);
 
   useEffect(() => {
     const fetchSchedules = async () => {

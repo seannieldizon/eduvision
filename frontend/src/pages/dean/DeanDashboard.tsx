@@ -81,7 +81,6 @@ const DeanDashboard: React.FC = () => {
   const date = today.getDate();
 
   const CourseName = localStorage.getItem("course") ?? "";
-  const ShortCourseName = CourseName.replace(/^bs/i, "").toUpperCase();
   const CollegeName = localStorage.getItem("college") ?? "";
 
   const [courseValue, setCourseValue] = useState('all');

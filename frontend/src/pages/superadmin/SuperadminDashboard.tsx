@@ -10,7 +10,6 @@ import {
   TableHead,
   TableRow,
   Card,
-  IconButton,
   Grid,
   Avatar,
   FormControl,
@@ -23,7 +22,6 @@ import SchoolIcon from "@mui/icons-material/School";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { green, grey } from "@mui/material/colors";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import axios from "axios";
@@ -85,7 +83,6 @@ const SuperAdminDashboard: React.FC = () => {
   const date = today.getDate();
 
   const CourseName = localStorage.getItem("course") ?? "";
-  const ShortCourseName = CourseName.replace(/^bs/i, "").toUpperCase();
   const CollegeName = localStorage.getItem("college") ?? "";
 
   const [courseValue, setCourseValue] = useState("all");

@@ -19,7 +19,6 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import axios from "axios";
 import SuperadminMain from "./SuperadminMain";
 
@@ -47,42 +46,14 @@ const ProgramChairInfoOnly: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedCollegeCode, setSelectedCollegeCode] = useState<string>("all");
-  const [colleges, setColleges] = useState<College[]>([]);
-  const [collegeDropdownOpen, setCollegeDropdownOpen] =
-    useState<boolean>(false);
-
-  const [selectedCourse, setSelectedCourse] = useState<string>("all");
-  const [courses, setCourses] = useState<string[]>([]);
-  const [courseDropdownOpen, setCourseDropdownOpen] = useState<boolean>(false);
-
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [statusDropdownOpen, setStatusDropdownOpen] = useState<boolean>(false);
-
   useEffect(() => {
     const fetchInstructorInfo = async () => {
       try {
         const response = await axios.get(
           "http://localhost:5000/api/superadmin/instructorinfo-only"
         );
-        console.log(response);
         setInstructorInfo(response.data);
         setLoading(false);
-
-        const collegeMap = new Map<string, College>();
-        const courseSet = new Set<string>();
-
-        response.data.forEach((instructor: Instructor) => {
-          if (instructor.college)
-            collegeMap.set(instructor.college._id, instructor.college);
-          if (instructor.course) courseSet.add(instructor.course);
-        });
-
-        setColleges([
-          { _id: "all", code: "All", name: "All Colleges" },
-          ...Array.from(collegeMap.values()),
-        ]);
-        setCourses(["All", ...Array.from(courseSet)]);
       } catch (error) {
         console.error("Error fetching instructor info:", error);
         setError("Failed to fetch instructor info");
@@ -93,16 +64,7 @@ const ProgramChairInfoOnly: React.FC = () => {
     fetchInstructorInfo();
   }, []);
 
-  const filteredInstructorInfo = instructorInfo.filter((instructor) => {
-    const matchesCollege =
-      selectedCollegeCode === "all" ||
-      instructor.college?.code === selectedCollegeCode;
-    const matchesCourse =
-      selectedCourse === "all" || instructor.course === selectedCourse;
-    const matchesStatus =
-      selectedStatus === "all" || instructor.status === selectedStatus;
-    return matchesCollege && matchesCourse && matchesStatus;
-  });
+  const filteredInstructorInfo = instructorInfo; // no filters for now
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
