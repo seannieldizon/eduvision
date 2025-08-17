@@ -24,6 +24,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+router.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 router.post("/send-verification-code", async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
 
