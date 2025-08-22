@@ -75,7 +75,7 @@ const SuperAdminDashboard: React.FC = () => {
     ],
   ]);
 
-  const [courses, setCourses] = useState([]);
+  const [colleges, setColleges] = useState([]);
   const [rooms, setRooms] = useState([]);
   const today = new Date();
   const year = today.getFullYear();
@@ -85,10 +85,29 @@ const SuperAdminDashboard: React.FC = () => {
   const CourseName = localStorage.getItem("course") ?? "";
   const CollegeName = localStorage.getItem("college") ?? "";
 
+  const [collegeValue, setCollegeValue] = useState("all");
   const [courseValue, setCourseValue] = useState("all");
   const [roomValue, setRoomValue] = useState("all");
+  const [programs, setPrograms] = useState<any[]>([]);
 
   const shortCourseValue = courseValue.replace(/^bs/i, "").toUpperCase();
+
+  const handleCollegeChange = async (code: string) => {
+    setCollegeValue(code);
+    setCourseValue("");
+    console.log("Selected college:", code);
+
+    try {
+      const res = await axios.post(
+        "https://eduvision-dura.onrender.com/api/superadmin/selected-college",
+        { collegeCode: code }
+      );
+      console.log("Courses under selected college:", res.data);
+      setPrograms(res.data);
+    } catch (error) {
+      console.error("Failed to fetch courses for selected college:", error);
+    }
+  };
 
   const handleCourseChange = (event: SelectChangeEvent) => {
     setCourseValue(event.target.value);
@@ -117,7 +136,7 @@ const SuperAdminDashboard: React.FC = () => {
     const fetchSchedules = async () => {
       try {
         const response = await axios.post(
-          "https://eduvision-dura.onrender.com/api/superadmin/dean/all-schedules/today",
+          "https://eduvision-dura.onrender.com/api/superadmin/all-schedules/today",
           {
             shortCourseValue: shortCourseValue,
           }
@@ -133,28 +152,22 @@ const SuperAdminDashboard: React.FC = () => {
   }, [shortCourseValue]);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchColleges = async () => {
       try {
         const response = await axios.get(
-          "https://eduvision-dura.onrender.com/api/superadmin/all-courses/college",
-          {
-            params: { CollegeName },
-          }
+          "https://eduvision-dura.onrender.com/api/superadmin/colleges"
         );
-        console.log("Courses fetched:", response.data);
-        setCourses(response.data);
+        setColleges(response.data);
       } catch (error) {
-        console.error("Error fetching sections:", error);
+        console.error("Failed to fetch colleges:", error);
       }
     };
 
-    if (CollegeName) {
-      fetchCourses();
-    }
-  }, [CollegeName]);
+    fetchColleges();
+  }, []);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchRooms = async () => {
       try {
         const response = await axios.get(
           "https://eduvision-dura.onrender.com/api/superadmin/all-rooms/college",
@@ -170,7 +183,7 @@ const SuperAdminDashboard: React.FC = () => {
     };
 
     if (CollegeName) {
-      fetchCourses();
+      fetchRooms();
     }
   }, [CollegeName]);
 
@@ -404,25 +417,47 @@ const SuperAdminDashboard: React.FC = () => {
                 </Typography>
 
                 <Box display="flex" gap={2}>
+                  {/* College Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel id="schedule-filter-label">Course</InputLabel>
+                    <InputLabel id="college-filter-label">College</InputLabel>
+                    <Select
+                      labelId="college-filter-label"
+                      id="college-filter"
+                      value={collegeValue} // ✅ controlled by same state
+                      label="College"
+                      onChange={(e) => handleCollegeChange(e.target.value)}
+                      renderValue={(selected) => selected || "Select College"}
+                    >
+                      {colleges.map((college: any) => (
+                        <MenuItem key={college._id} value={college.code}>
+                          {college.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {/* Course Dropdown */}
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel id="course-filter-label">Course</InputLabel>
                     <Select
                       labelId="course-filter-label"
                       id="course-filter"
                       value={courseValue}
                       label="Course"
                       onChange={handleCourseChange}
+                      renderValue={(selected) => selected || "Select Course"}
                     >
-                      {courses.map((course: any) => (
-                        <MenuItem key={course._id} value={`${course.code}`}>
-                          {`${course.code.toUpperCase()}`}
+                      {programs.map((course: any) => (
+                        <MenuItem key={course._id} value={course.code}>
+                          {course.code.toUpperCase()}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
 
+                  {/* Room Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel id="schedule-filter-label">Room</InputLabel>
+                    <InputLabel id="room-filter-label">Room</InputLabel>
                     <Select
                       labelId="room-filter-label"
                       id="room-filter"
@@ -431,8 +466,8 @@ const SuperAdminDashboard: React.FC = () => {
                       onChange={handleRoomChange}
                     >
                       {rooms.map((room: any) => (
-                        <MenuItem key={room._id} value={`${room.name}`}>
-                          {`${room.name}`}
+                        <MenuItem key={room._id} value={room.name}>
+                          {room.name}
                         </MenuItem>
                       ))}
                     </Select>

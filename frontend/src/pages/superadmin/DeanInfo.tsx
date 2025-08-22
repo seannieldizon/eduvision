@@ -97,15 +97,14 @@ const DeanInfo: React.FC = () => {
   };
 
   const handleInputChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-) => {
-  const { name, value } = e.target;
-  setNewFaculty((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
-
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewFaculty((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleRoleChange = (e: SelectChangeEvent<string>) => {
     setNewFaculty({ ...newFaculty, role: e.target.value });
@@ -500,18 +499,18 @@ const DeanInfo: React.FC = () => {
         </Grid>
       </Grid>
       <AddDeanModal
-  openModal={openModal}
-  handleCloseModal={handleCloseModal}
-  handleAddAccount={handleAddAccount}
-  handleInputChange={handleInputChange}
-  handleRoleChange={handleRoleChange}
-  togglePasswordVisibility={togglePasswordVisibility}
-  showPassword={showPassword}
-  newFaculty={newFaculty}
-  setNewFaculty={setNewFaculty}
-  colleges={colleges}
-  fetchCoursesByCollege={fetchCoursesByCollege}
-/>
+        openModal={openModal}
+        handleCloseModal={handleCloseModal}
+        handleAddAccount={handleAddAccount}
+        handleInputChange={handleInputChange}
+        handleRoleChange={handleRoleChange}
+        togglePasswordVisibility={togglePasswordVisibility}
+        showPassword={showPassword}
+        newFaculty={newFaculty}
+        setNewFaculty={setNewFaculty}
+        colleges={colleges}
+        fetchCoursesByCollege={fetchCoursesByCollege}
+      />
     </SuperadminMain>
   );
 };

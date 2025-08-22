@@ -255,26 +255,151 @@ router.post("/generate-daily-report", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/show-daily-report", async (req: Request, res: Response) => {
+router.post("/generate-monthly-report", async (req: Request, res: Response) => {
   try {
     const { CourseName } = req.body;
 
-    const today = new Date().toISOString().slice(0, 10); // Format: YYYY-MM-DD
+    // ✅ Calculate first and last day of current month
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-based
 
-    const query: any = { date: today }; // only logs from today
+    const firstDay = new Date(year, month, 1, 0, 0, 0, 0);
+    const lastDay = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+    const query: any = {
+      date: { $gte: firstDay.toISOString(), $lte: lastDay.toISOString() },
+    };
     if (CourseName) query.course = CourseName;
-    query.college = { $ne: null }; // only fetch logs with a college
 
     const logs = await Log.find(query)
       .populate({ path: "schedule", populate: { path: "instructor" } })
       .populate("college")
       .lean();
 
-    const tableData = logs.map((log) => {
+    // Group logs by instructor + course
+    const grouped: Record<string, any> = {};
+
+    for (const log of logs) {
       const schedule: any = log.schedule || {};
       const instructor = schedule?.instructor
         ? `${schedule.instructor.first_name} ${schedule.instructor.last_name}`
         : "N/A";
+
+      const key = `${instructor}_${schedule.courseCode}`;
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          instructorName: instructor,
+          courseCode: schedule.courseCode || "N/A",
+          courseTitle: schedule.courseTitle || "N/A",
+          room: schedule.room || "N/A",
+          totalHours: 0,
+          requiredHours: 0,
+        };
+      }
+
+      // ✅ Calculate hours attended (if timeIn + timeout exist)
+      if (log.timeIn && log.timeout) {
+        const [hIn, mIn] = log.timeIn.split(":").map(Number);
+        const [hOut, mOut] = log.timeout.split(":").map(Number);
+
+        const timeInDate = new Date(year, month, 1, hIn, mIn);
+        const timeOutDate = new Date(year, month, 1, hOut, mOut);
+
+        const diffHours = (timeOutDate.getTime() - timeInDate.getTime()) / (1000 * 60 * 60);
+        grouped[key].totalHours += diffHours;
+      }
+
+      // ✅ Calculate required hours from schedule duration
+      if (schedule.startTime && schedule.endTime) {
+        const [sh, sm] = schedule.startTime.split(":").map(Number);
+        const [eh, em] = schedule.endTime.split(":").map(Number);
+
+        const schedStart = new Date(year, month, 1, sh, sm);
+        const schedEnd = new Date(year, month, 1, eh, em);
+
+        const schedHours = (schedEnd.getTime() - schedStart.getTime()) / (1000 * 60 * 60);
+
+        // Add per log (one required session per log)
+        grouped[key].requiredHours += schedHours;
+      }
+    }
+
+    const tableData = Object.values(grouped);
+
+    // ✅ Build docx report
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+    });
+
+    const templatePath = path.join(
+      __dirname,
+      "../../templates/MonthlyReports.docx"
+    );
+    const content = fs.readFileSync(templatePath, "binary");
+
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    doc.setData({
+      reportDate: today,
+      courseName: CourseName?.toUpperCase() || "",
+      logs: tableData,
+    });
+
+    doc.render();
+
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+
+    const outputDir = path.join(__dirname, "../generated");
+    const outputPath = path.join(outputDir, "MonthlyAttendanceReport.docx");
+
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+    fs.writeFileSync(outputPath, buffer);
+
+    res.download(outputPath, "MonthlyAttendanceReport.docx");
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("❌ Error generating monthly report:", error.stack);
+    } else {
+      console.error("❌ Unknown error occurred:", error);
+    }
+    res.status(500).json({ message: "Error generating monthly report" });
+  }
+});
+
+
+router.post("/show-daily-report", async (req: Request, res: Response) => {
+  try {
+    const { CourseName } = req.body;
+
+    // format today's date as YYYY-MM-DD since logs.date is stored as a string
+    const today = new Date().toISOString().slice(0, 10);
+
+    const query: any = { date: today }; // only logs from today
+    if (CourseName) query.course = CourseName;
+    query.college = { $ne: null }; // only logs with a college linked
+
+    const logs = await Log.find(query)
+      .populate({
+        path: "schedule",
+        populate: { path: "instructor" },
+      })
+      .populate("college")
+      .lean();
+
+    const tableData = logs.map((log) => {
+      const schedule: any = log.schedule || {};
+      const instructor =
+        schedule?.instructor
+          ? `${schedule.instructor.first_name} ${schedule.instructor.last_name}`
+          : "N/A";
 
       return {
         name: instructor,
@@ -286,18 +411,19 @@ router.post("/show-daily-report", async (req: Request, res: Response) => {
       };
     });
 
-    res.status(200).json({ success: true, data: tableData });
+    res.status(200).json({
+      success: true,
+      data: tableData,
+    });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error fetching attendance data:", error.stack);
-    } else {
-      console.error("Unknown error occurred:", error);
-    }
-    res
-      .status(500)
-      .json({ success: false, message: "Error fetching attendance data" });
+    console.error("Error fetching daily report:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching attendance data",
+    });
   }
 });
+
 
 // FETCH ALL FULL SCHEDULES TODAY BASED ON COURSE
 router.post(
@@ -674,7 +800,7 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
       password,
       role,
       college: collegeCode,
-      course,
+      course: courseCode, // 👈 coming from req.body
       highestEducationalAttainment,
       academicRank,
       statusOfAppointment,
@@ -689,14 +815,13 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
       !email ||
       !password ||
       !role ||
-      !collegeCode
+      !collegeCode ||
+      !courseCode
     ) {
-      res
-        .status(400)
-        .json({
-          message:
-            "Please provide all required fields, including college and course",
-        });
+      res.status(400).json({
+        message:
+          "Please provide all required fields, including college and course",
+      });
       return;
     }
 
@@ -723,9 +848,17 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // 🔎 Find the college document
     const collegeDoc = await CollegeModel.findOne({ code: collegeCode });
     if (!collegeDoc) {
       res.status(400).json({ message: "Invalid college code" });
+      return;
+    }
+
+    // 🔎 Find the course document
+    const courseDoc = await Course.findOne({ code: courseCode });
+    if (!courseDoc) {
+      res.status(400).json({ message: "Invalid course code" });
       return;
     }
 
@@ -743,7 +876,7 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
       role,
       status: "forverification",
       college: collegeDoc._id,
-      course,
+      course: courseDoc._id, // 👈 Save as ObjectId
       highestEducationalAttainment,
       academicRank,
       statusOfAppointment,
@@ -759,15 +892,15 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
       subject: "Welcome to EduVision!",
       text: `Hello ${newUser.first_name},
 
-      Your faculty account has been created successfully.
+Your faculty account has been created successfully.
 
-      Here are your login details:
-      Username: ${newUser.username}
-      Password: ${password}
-      Please login and change your password immediately.
+Here are your login details:
+Username: ${newUser.username}
+Password: ${password}
+Please login and change your password immediately.
 
-      Thank you,
-      EduVision Team`,
+Thank you,
+EduVision Team`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -789,7 +922,7 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
       role: newUser.role,
       status: newUser.status,
       college: newUser.college,
-      course: newUser.course,
+      course: newUser.course, // this will be ObjectId
       highestEducationalAttainment: newUser.highestEducationalAttainment,
       academicRank: newUser.academicRank,
       statusOfAppointment: newUser.statusOfAppointment,
@@ -801,6 +934,7 @@ router.post("/faculty", async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 router.get(
   "/instructors",

@@ -1,10 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Drawer, List, ListItemButton, ListItemIcon, ListItemText,
-  CssBaseline, Box, Toolbar, Typography, Divider
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  CssBaseline,
+  Box,
+  Toolbar,
+  Typography,
+  Divider,
 } from "@mui/material";
-import { Dashboard, Videocam, People } from "@mui/icons-material";
+import {
+  Dashboard,
+  Videocam,
+  People,
+  PendingActions,
+} from "@mui/icons-material";
 import AdminHeader from "../../components/AdminHeader";
 
 const drawerWidth = 260;
@@ -21,9 +34,26 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [location.pathname]);
 
   const menuItems = [
-    { text: "Dashboard", icon: <Dashboard />, path: `/dean-dashboard/${facultyId}` },
-    { text: `${CollegeName} Staff Info`, icon: <People />, path: `/programchair-info/${facultyId}` },
-    { text: "Live Video", icon: <Videocam />, path: `/deanlivevideo/${facultyId}` },
+    {
+      text: "Dashboard",
+      icon: <Dashboard />,
+      path: `/dean-dashboard/${facultyId}`,
+    },
+    {
+      text: `${CollegeName} Staff Info`,
+      icon: <People />,
+      path: `/programchair-info/${facultyId}`,
+    },
+    {
+      text: "Pending Staff",
+      icon: <PendingActions />,
+      path: `/pending-faculty/${facultyId}`,
+    },
+    {
+      text: "Live Video",
+      icon: <Videocam />,
+      path: `/deanlivevideo/${facultyId}`,
+    },
   ];
 
   const handleNavigate = (path: string) => {
@@ -31,7 +61,9 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <Box sx={{ display: "flex", backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
+    <Box
+      sx={{ display: "flex", backgroundColor: "#f4f6f8", minHeight: "100vh" }}
+    >
       <CssBaseline />
       <AdminHeader />
 
@@ -68,7 +100,13 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   >
                     Faculty
                   </Typography>
-                  <Divider sx={{ backgroundColor: "rgba(255,255,255,0.2)", mx: 2, mb: 1 }} />
+                  <Divider
+                    sx={{
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                      mx: 2,
+                      mb: 1,
+                    }}
+                  />
                 </>
               )}
 
@@ -76,14 +114,21 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 onClick={() => handleNavigate(item.path)}
                 sx={{
                   color: activePage === item.path ? "#1e88e5" : "#ffffff",
-                  backgroundColor: activePage === item.path ? "rgba(30,136,229,0.2)" : "transparent",
+                  backgroundColor:
+                    activePage === item.path
+                      ? "rgba(30,136,229,0.2)"
+                      : "transparent",
                   borderRadius: "10px",
                   mx: 2,
                   my: 1,
                   "&:hover": { backgroundColor: "rgba(30,136,229,0.3)" },
                 }}
               >
-                <ListItemIcon sx={{ color: activePage === item.path ? "#1e88e5" : "#ffffff" }}>
+                <ListItemIcon
+                  sx={{
+                    color: activePage === item.path ? "#1e88e5" : "#ffffff",
+                  }}
+                >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText primary={item.text} />

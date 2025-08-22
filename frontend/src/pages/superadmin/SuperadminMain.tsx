@@ -1,24 +1,48 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Drawer, List, ListItemButton, ListItemIcon, ListItemText,
-  CssBaseline, Box, Toolbar, Typography, Divider
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  CssBaseline,
+  Box,
+  Toolbar,
+  Typography,
+  Divider,
 } from "@mui/material";
-import { Dashboard, Videocam, School, AssignmentInd, Person } from "@mui/icons-material";
+import {
+  Dashboard,
+  Videocam,
+  School,
+  AssignmentInd,
+  Person,
+} from "@mui/icons-material";
 import TuneIcon from "@mui/icons-material/Tune";
 import AdminHeader from "../../components/AdminHeader";
 
 const drawerWidth = 260;
 
-const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const facultyId = localStorage.getItem("userId");
 
   const menuItems = [
-    { text: "Dashboard", icon: <Dashboard />, path: "/superadmin-dashboard/:id" },
+    {
+      text: "Dashboard",
+      icon: <Dashboard />,
+      path: "/superadmin-dashboard/:id",
+    },
     { text: "Dean", icon: <School />, path: "/dean-info/:id" },
-    { text: "Program Chairperson", icon: <AssignmentInd />, path: "/programchairinfo-only/:id" },
+    {
+      text: "Program Chairperson",
+      icon: <AssignmentInd />,
+      path: "/programchairinfo-only/:id",
+    },
     { text: "Instructor", icon: <Person />, path: "/instructorinfo-only/:id" },
     { text: "Live Video", icon: <Videocam />, path: "/deanlivevideo/:id" },
     { text: "Camera Settings", icon: <TuneIcon />, path: "/deanlivevideo/:id" },
@@ -33,7 +57,9 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({ children }) =
   };
 
   return (
-    <Box sx={{ display: "flex", backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
+    <Box
+      sx={{ display: "flex", backgroundColor: "#f4f6f8", minHeight: "100vh" }}
+    >
       <CssBaseline />
       <AdminHeader />
 
@@ -53,7 +79,9 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({ children }) =
         <Toolbar />
         <List>
           {menuItems.map((item) => {
-            const resolvedPath = facultyId ? item.path.replace(":id", facultyId) : item.path;
+            const resolvedPath = facultyId
+              ? item.path.replace(":id", facultyId)
+              : item.path;
             const isActive = location.pathname === resolvedPath;
 
             return (
@@ -74,7 +102,13 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({ children }) =
                     >
                       Users Info
                     </Typography>
-                    <Divider sx={{ backgroundColor: "rgba(255,255,255,0.2)", mx: 2, mb: 1 }} />
+                    <Divider
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        mx: 2,
+                        mb: 1,
+                      }}
+                    />
                   </>
                 )}
 
@@ -94,7 +128,13 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({ children }) =
                     >
                       Cam Config
                     </Typography>
-                    <Divider sx={{ backgroundColor: "rgba(255,255,255,0.2)", mx: 2, mb: 1 }} />
+                    <Divider
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        mx: 2,
+                        mb: 1,
+                      }}
+                    />
                   </>
                 )}
 
@@ -102,14 +142,18 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({ children }) =
                   onClick={() => handleNavigate(item.path)}
                   sx={{
                     color: isActive ? "#1e88e5" : "#ffffff",
-                    backgroundColor: isActive ? "rgba(30,136,229,0.2)" : "transparent",
+                    backgroundColor: isActive
+                      ? "rgba(30,136,229,0.2)"
+                      : "transparent",
                     borderRadius: "10px",
                     mx: 2,
                     my: 1,
                     "&:hover": { backgroundColor: "rgba(30,136,229,0.3)" },
                   }}
                 >
-                  <ListItemIcon sx={{ color: isActive ? "#1e88e5" : "#ffffff" }}>
+                  <ListItemIcon
+                    sx={{ color: isActive ? "#1e88e5" : "#ffffff" }}
+                  >
                     {item.icon}
                   </ListItemIcon>
                   <ListItemText primary={item.text} />

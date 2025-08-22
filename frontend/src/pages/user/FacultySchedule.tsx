@@ -89,17 +89,17 @@ const FacultySchedule: React.FC = () => {
       try {
         const facultyId = localStorage.getItem("userId");
         if (!facultyId || !selectedLab) return;
-  
+
         const { data } = await axios.get(
           `https://eduvision-dura.onrender.com/api/auth/faculty-schedules/${facultyId}`
         );
-  
+
         const filteredSchedules = data.filter(
           (schedule: ScheduleItem) => schedule.room === selectedLab
         );
-  
+
         const allEvents: any[] = [];
-  
+
         filteredSchedules.forEach((schedule: ScheduleItem) => {
           const {
             startTime,
@@ -111,10 +111,10 @@ const FacultySchedule: React.FC = () => {
             days,
             room,
           } = schedule;
-  
+
           const startDate = new Date(semesterStartDate);
           const endDate = new Date(semesterEndDate);
-  
+
           const daysMap = {
             mon: 1,
             tue: 2,
@@ -123,11 +123,11 @@ const FacultySchedule: React.FC = () => {
             fri: 5,
             sat: 6,
           };
-  
+
           for (const [dayKey, dayNum] of Object.entries(daysMap)) {
             if (days[dayKey as keyof typeof days]) {
               let current = new Date(startDate);
-  
+
               while (current <= endDate) {
                 if (current.getDay() === dayNum) {
                   const dateStr = current.toISOString().split("T")[0];
@@ -145,22 +145,22 @@ const FacultySchedule: React.FC = () => {
             }
           }
         });
-  
+
         setEvents(allEvents);
       } catch (error) {
         console.error("Failed to load schedules:", error);
       }
     };
-  
+
     fetchSchedule();
-  }, [selectedLab, calendarView]); // <-- Add calendarView here!
-  
-  
+  }, [selectedLab, calendarView]);
 
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const { data } = await axios.get("https://eduvision-dura.onrender.com/api/auth/rooms");
+        const { data } = await axios.get(
+          "https://eduvision-dura.onrender.com/api/auth/rooms"
+        );
         setLabs(data);
         if (data.length > 0 && !selectedLab) {
           setSelectedLab(data[0].name);
@@ -169,18 +169,24 @@ const FacultySchedule: React.FC = () => {
         console.error("Failed to fetch labs:", error);
       }
     };
-  
+
     fetchLabs();
   }, []);
-  
 
   return (
     <UserMain>
-      <Typography variant="h4" fontWeight="bold" color="#333" mb={3}>
-        Welcome to your schedule!
-      </Typography>
+      <Box mb={3}>
+        <Typography variant="h4" fontWeight={600}>
+          My Schedule
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mt={0.5}>
+          Review and manage your teaching schedule.
+        </Typography>
+      </Box>
 
-      <Box sx={{ backgroundColor: "#fff", borderRadius: 2, p: 2, boxShadow: 2 }}>
+      <Box
+        sx={{ backgroundColor: "#fff", borderRadius: 2, p: 2, boxShadow: 2 }}
+      >
         {/* Custom Toolbar */}
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <Typography

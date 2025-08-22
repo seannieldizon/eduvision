@@ -47,7 +47,7 @@ export default function UpdateCredentials() {
         }
       );
 
-      const role = response.data.role; // Get the role from the response
+      const role = response.data.role;
 
       Swal.fire({
         icon: "success",
@@ -62,15 +62,14 @@ export default function UpdateCredentials() {
         navigate(`/faculty-dashboard/${id}`);
       } else if (role === "programchairperson") {
         navigate(`/dashboard/${id}`);
-      }else {
+      } else {
         navigate("/"); // Fallback
       }
     } catch (error: any) {
       Swal.fire({
         icon: "error",
         title: "Update Failed",
-        text:
-          error.response?.data?.message || "Could not update credentials.",
+        text: error.response?.data?.message || "Could not update credentials.",
       });
     } finally {
       setLoading(false);
@@ -87,7 +86,10 @@ export default function UpdateCredentials() {
         minHeight: "100vh",
       }}
     >
-      <Card elevation={3} sx={{ padding: 3, width: "100%", textAlign: "center" }}>
+      <Card
+        elevation={3}
+        sx={{ padding: 3, width: "100%", textAlign: "center" }}
+      >
         <CardContent>
           <Typography variant="h5" gutterBottom fontWeight="bold">
             Update Your Credentials

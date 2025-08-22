@@ -101,61 +101,84 @@ router.post("/verify-code", async (req: Request, res: Response): Promise<void> =
   res.status(200).json({ success: true, message: "Email verified successfully." });
 });
 
-router.post("/signup", facultyProfileUpload.single("photo"), async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email, role, department, program } = req.body;
-    const photo = req.file;
+router.post(
+  "/signup",
+  facultyProfileUpload.single("photo"),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, role, department, program } = req.body;
+      const photo = req.file;
 
-    if (!photo) {
-      res.status(400).json({ success: false, message: "Photo is required." });
-      return;
-    }
-
-    const photoUrl = photo.path;
-
-    const collegeDoc = await College.findOne({ code: department });
-    if (!collegeDoc) {
-      res.status(400).json({ success: false, message: `No college found with code '${department}'` });
-      return;
-    }
-
-    let courseDoc = null;
-    if (role !== "dean") {
-      courseDoc = await Course.findOne({ code: program });
-      if (!courseDoc) {
-        res.status(400).json({ success: false, message: `No course found with code '${program}'` });
+      if (!photo) {
+        res
+          .status(400)
+          .json({ success: false, message: "Photo is required." });
         return;
       }
-    }
 
-    const tempAccount = new TempAccount({
-      email,
-      role,
-      department: collegeDoc._id,
-      program: courseDoc ? courseDoc._id : undefined,
-      profilePhoto: photoUrl,
-    });
+      // ✅ Check if email already exists
+      const existingAccount = await TempAccount.findOne({ email });
+      if (existingAccount) {
+        res.status(400).json({
+          success: false,
+          message: `The email '${email}' is already registered.`,
+        });
+        return;
+      }
 
-    await tempAccount.save();
+      const photoUrl = photo.path;
 
-    res.status(201).json({
-      success: true,
-      message: "Signup request submitted!",
-      saved: {
-        id: tempAccount._id,
-        email: tempAccount.email,
+      const collegeDoc = await College.findOne({ code: department });
+      if (!collegeDoc) {
+        res.status(400).json({
+          success: false,
+          message: `No college found with code '${department}'`,
+        });
+        return;
+      }
+
+      let courseDoc = null;
+      if (role !== "dean") {
+        courseDoc = await Course.findOne({ code: program });
+        if (!courseDoc) {
+          res.status(400).json({
+            success: false,
+            message: `No course found with code '${program}'`,
+          });
+          return;
+        }
+      }
+
+      const tempAccount = new TempAccount({
+        email,
         role,
         department: collegeDoc._id,
-        program: courseDoc ? courseDoc._id : null,
+        program: courseDoc ? courseDoc._id : undefined,
         profilePhoto: photoUrl,
-      },
-    });
-  } catch (error) {
-    console.error("Signup error:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    res.status(500).json({ success: false, message });
+      });
+
+      await tempAccount.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Signup request submitted!",
+        saved: {
+          id: tempAccount._id,
+          email: tempAccount.email,
+          role,
+          department: collegeDoc._id,
+          program: courseDoc ? courseDoc._id : null,
+          profilePhoto: photoUrl,
+        },
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      const message =
+        error instanceof Error ? error.message : "Internal Server Error";
+      res.status(500).json({ success: false, message });
+    }
   }
-});
+);
 
 // ✅ CHECK IF EMAIL EXISTS IN TempAccount
 router.post("/check-temp-account", async (req: Request, res: Response) => {

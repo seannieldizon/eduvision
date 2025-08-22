@@ -60,29 +60,38 @@ const FacultyReports: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.post(
-          "https://eduvision-dura.onrender.com/api/auth/show-daily-report",
-          {
-            CourseName,
-          }
-        );
-        if (response.data.success) {
-          setRows(response.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch attendance data:", error);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      console.log("Fetching daily report for CourseName:", CourseName);
 
-    fetchData();
-  }, [CourseName]);
+      const response = await axios.post(
+        "https://eduvision-dura.onrender.com/api/auth/show-daily-report",
+        {
+          CourseName,
+        }
+      );
+
+      console.log("API Response:", response.data);
+
+      if (response.data.success) {
+        console.log("Attendance data:", response.data.data);
+        setRows(response.data.data);
+      } else {
+        console.warn("API returned success = false:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch attendance data:", error);
+    }
+  };
+
+  fetchData();
+}, [CourseName]);
+
 
   const handleGenerateReport = async () => {
     try {
       const response = await axios.post(
-        "https://eduvision-dura.onrender.com/api/auth/generate-daily-report",
+        "https://eduvision-dura.onrender.com/api/auth/generate-monthly-report",
         { CourseName: CourseName },
         { responseType: "blob" }
       );

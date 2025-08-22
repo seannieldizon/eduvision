@@ -64,7 +64,7 @@ const ProgramChairInfoOnly: React.FC = () => {
     fetchInstructorInfo();
   }, []);
 
-  const filteredInstructorInfo = instructorInfo; // no filters for now
+  const filteredInstructorInfo = instructorInfo;
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);

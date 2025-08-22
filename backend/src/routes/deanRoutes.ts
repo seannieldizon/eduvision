@@ -5,6 +5,8 @@ import College from "../models/College";
 import Room from "../models/Room";
 import Course from "../models/Course";
 import Schedule from "../models/Schedule";
+import TempAccount from "../models/TempAccount";
+
 
 const router = express.Router();
 
@@ -198,5 +200,39 @@ router.get(
     }
   }
 );
+
+router.get(
+  "/initial-staff",
+  async (req: Request, res: Response): Promise<void> => {
+    const { collegeName } = req.query;
+
+    if (!collegeName) {
+      res.status(400).json({ message: "collegeName is missing" });
+      return;
+    }
+
+    try {
+      // 🔎 Find the college by its code
+      const college = await College.findOne({ code: collegeName });
+      if (!college) {
+        res.status(404).json({ message: "College not found" });
+        return;
+      }
+
+      // 🔎 Match department with the found college._id
+      const facultyList = await TempAccount.find({
+        signUpStatus: "for_approval",
+        role: { $in: ["instructor", "programchairperson"] },
+        department: college._id,
+      }).populate("department program");
+
+      res.json(facultyList);
+    } catch (error) {
+      console.error("Error fetching faculty by college:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
 
 export default router;

@@ -62,7 +62,6 @@ const ProgramChairInfoOnly: React.FC = () => {
         setProgramChairInfo(response.data);
         setLoading(false);
 
-        // Extract unique colleges by _id
         const collegeMap = new Map<string, College>();
         response.data.forEach((pc: ProgramChairperson) => {
           if (pc.college) {

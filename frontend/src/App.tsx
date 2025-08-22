@@ -1,7 +1,14 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
 import Login from "./pages/Login";
 import RequiresCompletion from "./pages/RequiresCompletion";
-{/* for programchairperson*/}
+{
+  /* for programchairperson*/
+}
 import AdminMain from "./pages/programchairperson/AdminMain";
 import Dashboard from "./pages/programchairperson/Dashboard";
 import FacultyInfo from "./pages/programchairperson/FacultyInfo";
@@ -10,25 +17,30 @@ import UserMain from "./pages/user/UserMain";
 import FacultyReports from "./pages/programchairperson/FacultyReports";
 import PendingFaculty from "./pages/programchairperson/PendingFaculty";
 
-{/* for faculty*/}
+{
+  /* for faculty*/
+}
 import UpdateCredentials from "./pages/user/UpdateCredentials";
 import FacultyDashboard from "./pages/user/FacultyDashboard";
 import FacultySchedule from "./pages/user/FacultySchedule";
 import { FacultyProvider } from "./context/FacultyContext";
-{/* for superadmin*/}
+{
+  /* for superadmin*/
+}
 import SuperadminMain from "./pages/superadmin/SuperadminMain";
 import SuperadminDashboard from "./pages/superadmin/SuperadminDashboard";
 import DeanInfo from "./pages/superadmin/DeanInfo";
 import ProgramChairInfoOnly from "./pages/superadmin/ProgramChairInfoOnly";
 import InstructorInfoOnly from "./pages/superadmin/InstructorInfoOnly";
 
-{/* for dean*/}
+{
+  /* for dean*/
+}
 import DeanMain from "./pages/dean/DeanMain";
 import DeanDashboard from "./pages/dean/DeanDashboard";
 import ProgramchairInfo from "./pages/dean/ProgramchairInfo";
 import DeanLiveVideo from "./pages/dean/DeanLiveVideo";
-
-
+import PendingStaff from "./pages/dean/PendingStaff";
 
 export default function App() {
   return (
@@ -38,7 +50,10 @@ export default function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/update-credentials/:id" element={<UpdateCredentials />} />
-        <Route path="/requires-completion/:id" element={<RequiresCompletion />} />
+        <Route
+          path="/requires-completion/:id"
+          element={<RequiresCompletion />}
+        />
 
         {/* Superadmin Routes */}
         <Route
@@ -101,12 +116,20 @@ export default function App() {
         <Route
           path="/deanlivevideo/:id"
           element={
-              <DeanMain>
-                <DeanLiveVideo />
-              </DeanMain>
+            <DeanMain>
+              <DeanLiveVideo />
+            </DeanMain>
           }
         />
 
+        <Route
+          path="/pending-faculty/:id"
+          element={
+            <DeanMain>
+              <PendingStaff />
+            </DeanMain>
+          }
+        />
 
         {/* User Routes */}
         <Route
@@ -169,9 +192,9 @@ export default function App() {
         <Route
           path="/faculty-reports/:id"
           element={
-              <AdminMain>
-                <FacultyReports />
-              </AdminMain>
+            <AdminMain>
+              <FacultyReports />
+            </AdminMain>
           }
         />
       </Routes>

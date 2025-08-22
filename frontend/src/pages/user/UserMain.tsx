@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Drawer, List, ListItemButton, ListItemIcon, ListItemText,
-  CssBaseline, Box, Toolbar, Typography, Divider
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  CssBaseline,
+  Box,
+  Toolbar,
+  Typography,
+  Divider,
 } from "@mui/material";
 import { Dashboard, CalendarToday } from "@mui/icons-material";
 import AdminHeader from "../../components/AdminHeader";
@@ -31,7 +39,9 @@ const UserMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <Box sx={{ display: "flex", backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
+    <Box
+      sx={{ display: "flex", backgroundColor: "#f4f6f8", minHeight: "100vh" }}
+    >
       <CssBaseline />
       <AdminHeader />
 
@@ -68,7 +78,13 @@ const UserMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   >
                     Faculty
                   </Typography>
-                  <Divider sx={{ backgroundColor: "rgba(255,255,255,0.2)", mx: 2, mb: 1 }} />
+                  <Divider
+                    sx={{
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                      mx: 2,
+                      mb: 1,
+                    }}
+                  />
                 </>
               )}
 
@@ -76,14 +92,21 @@ const UserMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 onClick={() => handleNavigate(item.path)}
                 sx={{
                   color: activePage === item.path ? "#1e88e5" : "#ffffff",
-                  backgroundColor: activePage === item.path ? "rgba(30,136,229,0.2)" : "transparent",
+                  backgroundColor:
+                    activePage === item.path
+                      ? "rgba(30,136,229,0.2)"
+                      : "transparent",
                   borderRadius: "10px",
                   mx: 2,
                   my: 1,
                   "&:hover": { backgroundColor: "rgba(30,136,229,0.3)" },
                 }}
               >
-                <ListItemIcon sx={{ color: activePage === item.path ? "#1e88e5" : "#ffffff" }}>
+                <ListItemIcon
+                  sx={{
+                    color: activePage === item.path ? "#1e88e5" : "#ffffff",
+                  }}
+                >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText primary={item.text} />

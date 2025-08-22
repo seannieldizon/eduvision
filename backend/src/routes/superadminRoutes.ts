@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import UserModel from '../models/User';
 import College from "../models/College";
 import Course from "../models/Course";
-
+import Schedule from "../models/Schedule";
 
 
 const router = express.Router();
@@ -55,7 +55,60 @@ router.get("/instructorinfo-only", async (req: Request, res: Response): Promise<
   }
 });
 
+router.post(
+  "/all-schedules/today",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+      const today = dayNames[new Date().getDay()];
 
+      const schedules = await Schedule.find({
+        [`days.${today}`]: true,
+      })
+        .populate("instructor", "first_name last_name")
+        .populate("section", "course section block")
+        .lean();
+
+      res.status(200).json(schedules);
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      res.status(500).json({ message: "Error fetching schedules" });
+    }
+  }
+);
+
+router.get("/colleges", async (req: Request, res: Response) => {
+  try {
+    const colleges = await College.find();
+    res.status(200).json(colleges);
+  } catch (error) {
+    console.error("Failed to fetch colleges:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.post("/selected-college", async (req: Request, res: Response): Promise<void> => {
+  const { collegeCode } = req.body;
+
+  try {
+    // Step 1: Find the college by code
+    const college = await College.findOne({ code: collegeCode });
+
+    if (!college) {
+      res.status(404).json({ message: "College not found" });
+      return;
+    }
+
+    // Step 2: Use the college _id to find matching courses
+    const courses = await Course.find({ college: college._id }).populate("college");
+
+    // Step 3: Return the courses
+    res.status(200).json(courses);
+  } catch (error) {
+    console.error("Error fetching programs by college code:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 router.get('/all-colleges', async (req, res) => {
   try {
