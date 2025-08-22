@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import Login from "./pages/Login";
 import RequiresCompletion from "./pages/RequiresCompletion";
+import PageNotFound from "./pages/PageNotFound";
 {
   /* for programchairperson*/
 }
@@ -197,6 +198,8 @@ export default function App() {
             </AdminMain>
           }
         />
+
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Router>
   );
