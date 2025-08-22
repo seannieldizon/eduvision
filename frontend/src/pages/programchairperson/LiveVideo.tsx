@@ -12,8 +12,8 @@ import axios from "axios";
 import AdminMain from "./AdminMain";
 import { Tooltip } from "@mui/material";
 import dayjs from "dayjs";
-
-
+import Hls from "hls.js";
+import WHEPClient from "whep-client";
 
 interface Schedule {
   courseTitle: string;
@@ -74,8 +74,9 @@ const LiveVideo: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [currentMinutesSinceStart, setCurrentMinutesSinceStart] = useState<number | null>(null);
   const [logs, setLogs] = useState<Log[]>([]);
-
-
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const resourceUrlRef = useRef<string | null>(null); // for cleanup
   const CourseName = localStorage.getItem("course") ?? "";
   const ShortCourseName = CourseName.replace(/^bs/i, "").toUpperCase();
 
@@ -83,99 +84,76 @@ const LiveVideo: React.FC = () => {
     "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM",
     "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM"
   ];
-
-
-  useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/auth/logs/today');
-        console.log('Fetched logs:', response.data);
-        setLogs(response.data);
-      } catch (error) {
-        console.error('Error fetching logs:', error);
-      }
-    };
-
-    fetchLogs();
-  }, []);
-
-  useEffect(() => {
-    const updatePointer = () => {
-      const now = dayjs();
-      const startOfTimeline = now.startOf("day").hour(6).minute(0).second(0);
-      const diffInMinutes = now.diff(startOfTimeline, "minute");
-  
-      if (diffInMinutes >= 0 && diffInMinutes <= 780) {
-        setCurrentMinutesSinceStart(diffInMinutes);
-      } else {
-        setCurrentMinutesSinceStart(null);
-      }
-    };
-  
-    updatePointer();
-  
-    const now = new Date();
-    const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
-  
-    const timeout = setTimeout(() => {
-      updatePointer();
-  
-      const interval = setInterval(updatePointer, 60 * 1000);
-  
-      return () => clearInterval(interval);
-    }, msUntilNextMinute);
-  
-    return () => clearTimeout(timeout);
-  }, []);
   
 
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        const response = await axios.post("http://localhost:5000/api/auth/all-schedules/today", {
-          shortCourseName: ShortCourseName
-        });
-        console.log("Received today data:", response.data);
-        setSchedules(response.data);
-      } catch (error) {
-        console.error("Error fetching schedules:", error);
-      }
-    };
-  
-    fetchSchedules();
-  }, [ShortCourseName]);
+   const startStream = async () => {
+    if (!videoRef.current) return;
 
-  useEffect(() => {
-    const fetchLabs = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/auth/rooms");
-        setLabs(response.data);
-
-        if (response.data.length > 0 && !selectedLab) {
-          setSelectedLab(response.data[0].name);
-        }
-      } catch (error) {
-        console.error("Error fetching labs:", error);
-      }
-    };
-
-    fetchLabs();
-  }, []);
-
-  useEffect(() => {
-    if (timelineRef.current && currentMinutesSinceStart !== null) {
-      const tickHeight = 46.04;
-      const scrollPosition = (currentMinutesSinceStart / 5) * tickHeight;
-  
-      timelineRef.current.scrollTop = scrollPosition - 100;
+    // stop any previous connection
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
     }
-  }, [currentMinutesSinceStart]);
-  
 
-  const handleLabChange = (event: SelectChangeEvent) => {
-    setSelectedLab(event.target.value);
+    // Create PeerConnection
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+    pcRef.current = pc;
+
+    // Attach remote track
+   pc.ontrack = (event) => {
+  console.log("Remote track received:", event.streams);
+  if (videoRef.current) {
+    videoRef.current.srcObject = event.streams[0];
+  }
+};
+
+    // Create SDP offer
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    // Wait until ICE gathering is complete
+    await new Promise<void>((resolve) => {
+      if (pc.iceGatheringState === "complete") resolve();
+      else {
+        pc.addEventListener("icegatheringstatechange", () => {
+          if (pc.iceGatheringState === "complete") resolve();
+        });
+      }
+    });
+
+    // Send SDP offer to WHEP endpoint
+    const whepUrl = "http://localhost:8889/hikvision/";
+    const res = await fetch(whepUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/sdp" },
+      body: pc.localDescription?.sdp,
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to connect to WHEP endpoint");
+    }
+
+    // Get SDP answer
+    const answerSDP = await res.text();
+    await pc.setRemoteDescription({ type: "answer", sdp: answerSDP });
+
+    console.log("WebRTC stream started");
   };
 
+  useEffect(() => {
+    startStream().catch((err) => {
+      console.error("WebRTC error:", err);
+    });
+
+    return () => {
+      if (pcRef.current) {
+        pcRef.current.close();
+      }
+    };
+  }, []);
+    
   return (
     <AdminMain>
       <Box
@@ -193,7 +171,7 @@ const LiveVideo: React.FC = () => {
           <Select
             labelId="lab-select-label"
             value={selectedLab}
-            onChange={handleLabChange}
+            //onChange={handleLabChange}
             label="Select Lab"
           >
             {labs.map((lab) => (
@@ -215,9 +193,12 @@ const LiveVideo: React.FC = () => {
       >
         {/* Video Stream (2/3) */}
         <Box sx={{ flex: 2, display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <img
-            src="http://localhost:5001/video_feed"
-            alt="Live Video Stream"
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            controls
             style={{
               width: "100%",
               maxWidth: "800px",
@@ -227,7 +208,7 @@ const LiveVideo: React.FC = () => {
               boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
             }}
           />
-        </Box>
+        </Box>  
 
         {/* Scrollable Timeline (1/3) */}
         <Box
