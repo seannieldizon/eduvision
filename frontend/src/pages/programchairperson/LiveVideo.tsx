@@ -8,7 +8,7 @@ import {
   MenuItem,
   //SelectChangeEvent,
 } from "@mui/material";
-import axios from "axios";
+//import axios from "axios";
 import AdminMain from "./AdminMain";
 import { Tooltip } from "@mui/material";
 
@@ -66,17 +66,17 @@ function getTimeFromTick(hourIndex: number, tickIndex: number, minutesPerTick = 
 
 
 const LiveVideo: React.FC = () => {
-  const [labs, setLabs] = useState<any[]>([]);
-  const [selectedLab, setSelectedLab] = useState("Lab 1");
+  const [labs, ] = useState<any[]>([]);
+  const [selectedLab, ] = useState("Lab 1");
   const timelineRef = useRef<HTMLDivElement>(null);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [currentMinutesSinceStart, setCurrentMinutesSinceStart] = useState<number | null>(null);
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [schedules, ] = useState<Schedule[]>([]);
+  const [currentMinutesSinceStart, ] = useState<number | null>(null);
+  const [logs, ] = useState<Log[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
-  const resourceUrlRef = useRef<string | null>(null); // for cleanup
-  const CourseName = localStorage.getItem("course") ?? "";
-  const ShortCourseName = CourseName.replace(/^bs/i, "").toUpperCase();
+  //const resourceUrlRef = useRef<string | null>(null); // for cleanup
+  //const CourseName = localStorage.getItem("course") ?? "";
+  //const ShortCourseName = CourseName.replace(/^bs/i, "").toUpperCase();
 
   const timeLabels = [
     "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM",
