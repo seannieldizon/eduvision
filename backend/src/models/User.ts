@@ -49,6 +49,7 @@ const UserSchema: Schema<IUser> = new Schema({
     type: String,
     required: true,
     enum: ["superadmin", "instructor", "dean", "programchairperson"],
+    lowercase: true,
   },
   college: {
     type: mongoose.Schema.Types.ObjectId,

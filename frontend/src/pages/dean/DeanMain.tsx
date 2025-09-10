@@ -47,7 +47,7 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     {
       text: "Pending Staff",
       icon: <PendingActions />,
-      path: `/pending-faculty/${facultyId}`,
+      path: `/pending-staff/${facultyId}`,
     },
     {
       text: "Live Video",

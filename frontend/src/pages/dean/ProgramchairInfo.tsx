@@ -27,6 +27,7 @@ import {
   Autocomplete,
   TablePagination,
   CircularProgress,
+  Chip
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -585,11 +586,52 @@ const ProgramchairInfo: React.FC = () => {
                           </TableCell>
                           <TableCell>{chair.course}</TableCell>
                           <TableCell>
-                            {chair.status === "forverification"
-                              ? "For Verification"
-                              : chair.status.charAt(0).toUpperCase() +
-                                chair.status.slice(1)}
-                          </TableCell>
+  {chair.status === "forverification" ? (
+    <Chip
+      label="For Verification"
+      size="small"
+      sx={{
+        bgcolor: "#fff3cd",
+        color: "#856404",
+        fontWeight: 500,
+        borderRadius: "8px",
+      }}
+    />
+  ) : chair.status === "active" ? (
+    <Chip
+      label="Active"
+      size="small"
+      sx={{
+        bgcolor: "#d4edda",
+        color: "#155724",
+        fontWeight: 500,
+        borderRadius: "8px",
+      }}
+    />
+  ) : chair.status === "inactive" ? (
+    <Chip
+      label="Inactive"
+      size="small"
+      sx={{
+        bgcolor: "#f8d7da",
+        color: "#721c24",
+        fontWeight: 500,
+        borderRadius: "8px",
+      }}
+    />
+  ) : (
+    <Chip
+      label={chair.status.charAt(0).toUpperCase() + chair.status.slice(1)}
+      size="small"
+      sx={{
+        bgcolor: "#e2e3e5",
+        color: "#383d41",
+        fontWeight: 500,
+        borderRadius: "8px",
+      }}
+    />
+  )}
+</TableCell>
                           <TableCell>
                             <IconButton
                               onClick={(e) =>

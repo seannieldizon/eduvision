@@ -33,7 +33,9 @@ import SuperadminDashboard from "./pages/superadmin/SuperadminDashboard";
 import DeanInfo from "./pages/superadmin/DeanInfo";
 import ProgramChairInfoOnly from "./pages/superadmin/ProgramChairInfoOnly";
 import InstructorInfoOnly from "./pages/superadmin/InstructorInfoOnly";
-
+import PendingInstructors from "./pages/superadmin/PendingInstructors";
+import PendingProgramchairpersons from "./pages/superadmin/PendingProgramchairpersons";
+import PendingDeans from "./pages/superadmin/PendingDeans";
 {
   /* for dean*/
 }
@@ -93,6 +95,30 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/pending-instructors/:id"
+          element={
+            <SuperadminMain>
+              <PendingInstructors />
+            </SuperadminMain>
+          }
+        />
+        <Route
+          path="/pending-programchairpersons/:id"
+          element={
+            <SuperadminMain>
+              <PendingProgramchairpersons />
+            </SuperadminMain>
+          }
+        />
+        <Route
+          path="/pending-deans/:id"
+          element={
+            <SuperadminMain>
+              <PendingDeans />
+            </SuperadminMain>
+          }
+        />
         {/* Dean Routes */}
         <Route
           path="/dean-dashboard/:id"
@@ -124,7 +150,7 @@ export default function App() {
         />
 
         <Route
-          path="/pending-faculty/:id"
+          path="/pending-staff/:id"
           element={
             <DeanMain>
               <PendingStaff />
