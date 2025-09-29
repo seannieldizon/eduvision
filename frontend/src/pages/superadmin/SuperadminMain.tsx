@@ -18,8 +18,11 @@ import {
   School,
   AssignmentInd,
   Person,
+  Tune as TuneIcon,
+  HourglassEmpty,
+  PendingActions,
+  Schedule,
 } from "@mui/icons-material";
-import TuneIcon from "@mui/icons-material/Tune";
 import AdminHeader from "../../components/AdminHeader";
 
 const drawerWidth = 260;
@@ -44,6 +47,20 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({
       path: "/programchairinfo-only/:id",
     },
     { text: "Instructor", icon: <Person />, path: "/instructorinfo-only/:id" },
+
+    // 🔹 Pending Accounts section
+    {
+      text: "Pending Instructors",
+      icon: <HourglassEmpty />,
+      path: "/pending-instructors/:id",
+    },
+    {
+      text: "Pending Program Chairpersons",
+      icon: <PendingActions />,
+      path: "/pending-programchairpersons/:id",
+    },
+    { text: "Pending Deans", icon: <Schedule />, path: "/pending-deans/:id" },
+
     { text: "Live Video", icon: <Videocam />, path: "/deanlivevideo/:id" },
     { text: "Camera Settings", icon: <TuneIcon />, path: "/deanlivevideo/:id" },
   ];
@@ -73,6 +90,26 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({
             boxSizing: "border-box",
             backgroundColor: "#3D1308",
             color: "#ffffff",
+            overflowY: "auto", // 🔹 Enable scrolling
+            scrollbarWidth: "thin", // Firefox support
+            scrollbarColor: "rgba(255,255,255,0.3) transparent",
+
+            // 🔹 Floating modern scrollbar (WebKit)
+            "&::-webkit-scrollbar": {
+              width: "6px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent", // no fixed track → floating
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "rgba(255,255,255,0.3)", // semi-transparent thumb
+              borderRadius: "10px",
+              visibility: "hidden", // hidden until hover/scroll
+            },
+            "&:hover::-webkit-scrollbar-thumb, &:active::-webkit-scrollbar-thumb":
+              {
+                visibility: "visible", // show when user interacts
+              },
           },
         }}
       >
@@ -101,6 +138,33 @@ const SuperadminMain: React.FC<{ children: React.ReactNode }> = ({
                       }}
                     >
                       Users Info
+                    </Typography>
+                    <Divider
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        mx: 2,
+                        mb: 1,
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* 🔹 Section title before pending accounts */}
+                {item.text === "Pending Instructors" && (
+                  <>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: "#ffffff",
+                        textTransform: "uppercase",
+                        fontWeight: "bold",
+                        ml: 3,
+                        mt: 2,
+                        mb: 1,
+                        opacity: 0.7,
+                      }}
+                    >
+                      Pending Accounts
                     </Typography>
                     <Divider
                       sx={{

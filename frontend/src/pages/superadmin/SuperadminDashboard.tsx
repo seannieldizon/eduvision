@@ -17,6 +17,7 @@ import {
   MenuItem,
   SelectChangeEvent,
   Select,
+  CircularProgress,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -91,12 +92,15 @@ const SuperAdminDashboard: React.FC = () => {
   const [programs, setPrograms] = useState<any[]>([]);
 
   const shortCourseValue = courseValue.replace(/^bs/i, "").toUpperCase();
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingColleges, setLoadingColleges] = useState(false);
 
   const handleCollegeChange = async (code: string) => {
     setCollegeValue(code);
     setCourseValue("");
     console.log("Selected college:", code);
 
+    setLoadingCourses(true);
     try {
       const res = await axios.post(
         "https://eduvision-dura.onrender.com/api/superadmin/selected-college",
@@ -106,6 +110,8 @@ const SuperAdminDashboard: React.FC = () => {
       setPrograms(res.data);
     } catch (error) {
       console.error("Failed to fetch courses for selected college:", error);
+    } finally {
+      setLoadingCourses(false);
     }
   };
 
@@ -153,6 +159,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchColleges = async () => {
+      setLoadingColleges(true);
       try {
         const response = await axios.get(
           "https://eduvision-dura.onrender.com/api/superadmin/colleges"
@@ -160,6 +167,8 @@ const SuperAdminDashboard: React.FC = () => {
         setColleges(response.data);
       } catch (error) {
         console.error("Failed to fetch colleges:", error);
+      } finally {
+        setLoadingColleges(false);
       }
     };
 
@@ -423,16 +432,28 @@ const SuperAdminDashboard: React.FC = () => {
                     <Select
                       labelId="college-filter-label"
                       id="college-filter"
-                      value={collegeValue} // ✅ controlled by same state
+                      value={collegeValue}
                       label="College"
                       onChange={(e) => handleCollegeChange(e.target.value)}
-                      renderValue={(selected) => selected || "Select College"}
+                      renderValue={(selected) =>
+                        selected ||
+                        (loadingColleges ? "Loading..." : "Select College")
+                      }
                     >
-                      {colleges.map((college: any) => (
-                        <MenuItem key={college._id} value={college.code}>
-                          {college.name}
+                      {loadingColleges ? (
+                        <MenuItem disabled>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <CircularProgress size={20} />
+                            Loading Colleges...
+                          </Box>
                         </MenuItem>
-                      ))}
+                      ) : (
+                        colleges.map((college: any) => (
+                          <MenuItem key={college._id} value={college.code}>
+                            {college.name}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
 
@@ -445,13 +466,27 @@ const SuperAdminDashboard: React.FC = () => {
                       value={courseValue}
                       label="Course"
                       onChange={handleCourseChange}
-                      renderValue={(selected) => selected || "Select Course"}
+                      renderValue={(selected) =>
+                        selected?.toUpperCase() || "Select Course"
+                      }
                     >
-                      {programs.map((course: any) => (
-                        <MenuItem key={course._id} value={course.code}>
-                          {course.code.toUpperCase()}
+                      {loadingCourses ? (
+                        <MenuItem disabled>
+                          <CircularProgress size={20} sx={{ mr: 1 }} />
+                          Loading...
                         </MenuItem>
-                      ))}
+                      ) : programs.length > 0 ? (
+                        programs.map((course: any) => (
+                          <MenuItem
+                            key={course._id}
+                            value={course.code.toLowerCase()}
+                          >
+                            {course.code.toUpperCase()}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No courses found</MenuItem>
+                      )}
                     </Select>
                   </FormControl>
 

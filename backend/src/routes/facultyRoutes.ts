@@ -11,41 +11,50 @@ dotenv.config();
 const router = express.Router();
 
 // UPDATE CREDENTIALS ROUTE
-router.put("/update-credentials/:id", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { username, password } = req.body;
+router.put(
+  "/update-credentials/:id",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { username, password } = req.body;
 
-    const faculty = await User.findById(id);
-    if (!faculty) {
-      res.status(404).json({ message: "User not found" });
-      return;
+      const faculty = await User.findById(id);
+      if (!faculty) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      // Check if username is already taken by someone else
+      const existingUser = await User.findOne({ username, _id: { $ne: id } });
+      if (existingUser) {
+        res.status(400).json({ message: "Username is already taken" });
+        return;
+      }
+
+      // Hash the password before saving
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      faculty.username = username;
+      faculty.password = hashedPassword;
+      faculty.status = "active";
+
+      // ✅ Ensure role stays lowercase & matches your union type
+      if (faculty.role) {
+        faculty.role = faculty.role.toLowerCase() as any; // cast back to UserRole
+      }
+
+      await faculty.save();
+
+      res.json({
+        message: "Credentials updated successfully",
+        role: faculty.role,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
     }
-
-    const existingUser = await User.findOne({ username, _id: { $ne: id } });
-    if (existingUser) {
-      res.status(400).json({ message: "Username is already taken" });
-      return;
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    faculty.username = username;
-    faculty.password = hashedPassword;
-    faculty.status = "active";
-
-    await faculty.save();
-
-    // Include role in the response
-    res.json({
-      message: "Credentials updated successfully",
-      role: faculty.role, // <-- Add this
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
   }
-});
+);
 
 
 // GET SCHEDULES FOR SPECIFIC FACULTY
