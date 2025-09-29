@@ -17,7 +17,7 @@ import LiveVideo from "./pages/programchairperson/LiveVideo";
 import UserMain from "./pages/user/UserMain";
 import FacultyReports from "./pages/programchairperson/FacultyReports";
 import PendingFaculty from "./pages/programchairperson/PendingFaculty";
-
+import FaceRegistration from "./pages/programchairperson/FaceRegistration";
 {
   /* for faculty*/
 }
@@ -183,6 +183,15 @@ export default function App() {
           element={
             <AdminMain>
               <Dashboard />
+            </AdminMain>
+          }
+        />
+
+        <Route
+          path="/face-registration/:id"
+          element={
+            <AdminMain>
+              <FaceRegistration />
             </AdminMain>
           }
         />

@@ -31,7 +31,7 @@ import { ILog } from "../models/AttendanceLogs";
 import nodemailer from "nodemailer";
 import TempAccount from "../models/TempAccount";
 import Course from "../models/Course";
-import facultyProfileUpload from "../middleware/facultyProfileUpload"
+import facultyProfileUpload from "../middleware/facultyProfileUpload";
 
 dotenv.config();
 const router = express.Router();
@@ -54,11 +54,17 @@ router.post(
   facultyProfileUpload.single("image"),
   async (req, res): Promise<void> => {
     try {
-      const file = req.file as Express.Multer.File & { path?: string; secure_url?: string; url?: string };
+      const file = req.file as Express.Multer.File & {
+        path?: string;
+        secure_url?: string;
+        url?: string;
+      };
       const { facultyId } = req.body;
 
       if (!file || !facultyId) {
-        res.status(400).json({ message: "Image file and facultyId are required" });
+        res
+          .status(400)
+          .json({ message: "Image file and facultyId are required" });
         return;
       }
 
@@ -71,7 +77,9 @@ router.post(
       // Always get the correct Cloudinary URL
       const imageUrl = file.path || file.secure_url || file.url;
       if (!imageUrl) {
-        res.status(500).json({ message: "Could not determine uploaded image URL" });
+        res
+          .status(500)
+          .json({ message: "Could not determine uploaded image URL" });
         return;
       }
 
@@ -89,7 +97,6 @@ router.post(
     }
   }
 );
-
 
 router.get("/user/name", async (req: Request, res: Response): Promise<void> => {
   const userId = req.query.name as string;
@@ -121,15 +128,15 @@ router.get("/user/name", async (req: Request, res: Response): Promise<void> => {
 });
 
 router.post(
-  '/upload-faculty-profile-photo',
-  facultyProfileUpload.single('image'),
+  "/upload-faculty-profile-photo",
+  facultyProfileUpload.single("image"),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const file = req.file as Express.Multer.File & { path: string };
       const { facultyId } = req.body;
 
       if (!file || !facultyId) {
-        res.status(400).json({ message: 'File and facultyId are required' });
+        res.status(400).json({ message: "File and facultyId are required" });
         return;
       }
 
@@ -141,18 +148,18 @@ router.post(
       );
 
       if (!updatedUser) {
-        res.status(404).json({ message: 'Faculty not found' });
+        res.status(404).json({ message: "Faculty not found" });
         return;
       }
 
       res.status(200).json({
-        message: 'Contract uploaded and saved successfully',
+        message: "Contract uploaded and saved successfully",
         imageUrl: file.path,
         user: updatedUser,
       });
     } catch (error) {
-      console.error('Upload error:', error);
-      res.status(500).json({ message: 'Internal server error', error });
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Internal server error", error });
     }
   }
 );
@@ -176,204 +183,142 @@ router.get("/logs/today", async (req, res) => {
   }
 });
 
-router.post("/generate-daily-report", async (req: Request, res: Response) => {
-  try {
-    const { CourseName } = req.body;
+router.post(
+  "/generate-monthly-department-logs",
+  async (req: Request, res: Response) => {
+    try {
+      const { CourseName } = req.body;
 
-    const query: any = {};
-    if (CourseName) query.course = CourseName;
+      const query: any = {};
+      if (CourseName) query.course = CourseName;
 
-    const logs = await Log.find(query)
-      .populate({ path: "schedule", populate: { path: "instructor" } })
-      .populate("college")
-      .lean();
+      // Fetch logs with population
+      const logs = await Log.find(query)
+        .populate({
+          path: "schedule",
+          populate: {
+            path: "instructor",
+            select: "first_name middle_name last_name",
+          },
+        })
+        .populate("college")
+        .lean();
 
-    const tableData = logs.map((log) => {
-      const schedule: any = log.schedule || {};
-      const instructor = schedule?.instructor
-        ? `${schedule.instructor.first_name} ${schedule.instructor.last_name}`
-        : "N/A";
+      // Group logs by schedule
+      const grouped: Record<string, any> = {};
+      for (const log of logs) {
+        const schedule: any = log.schedule || {};
+        const instructorObj = schedule?.instructor;
 
-      return {
-        instructorName: instructor,
-        courseCode: schedule.courseCode || "N/A",
-        courseTitle: schedule.courseTitle || "N/A",
-        status: log.status || "N/A",
-        timeInOut: `${log.timeIn || "-"} / ${log.timeout || "-"}`,
-        room: schedule.room || "N/A",
-      };
-    });
+        const instructorName = instructorObj
+          ? `${instructorObj.last_name}, ${instructorObj.first_name} ${
+              instructorObj.middle_name
+                ? instructorObj.middle_name.charAt(0) + "."
+                : ""
+            }`.trim()
+          : "N/A";
 
-    const today = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+        const key = `${schedule._id}`;
 
-    const templatePath = path.join(
-      __dirname,
-      "../../templates/DailyReports.docx"
-    );
-    const content = fs.readFileSync(templatePath, "binary");
+        // Compute scheduled session duration
+        let sessionHours = 0;
+        if (schedule?.startTime && schedule?.endTime) {
+          const [sh, sm] = schedule.startTime.split(":").map(Number);
+          const [eh, em] = schedule.endTime.split(":").map(Number);
+          if (!isNaN(sh) && !isNaN(sm) && !isNaN(eh) && !isNaN(em)) {
+            sessionHours = (eh * 60 + em - (sh * 60 + sm)) / 60;
+          }
+        }
 
-    const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-    });
+        if (!grouped[key]) {
+          grouped[key] = {
+            instructorName,
+            courseCode: schedule.courseCode || "N/A",
+            courseTitle: schedule.courseTitle || "N/A",
+            room: schedule.room || "N/A",
+            totalHours: 0, // attended hours
+            requiredHours: 0, // scheduled hours
+            absences: 0,
+            late: 0,
+          };
+        }
 
-    const formattedRows = tableData.map(
-      (entry) =>
-        `${entry.instructorName} | ${entry.courseCode} | ${entry.courseTitle} | ${entry.status} | ${entry.timeInOut} | ${entry.room}`
-    );
+        // Add required hours
+        grouped[key].requiredHours += sessionHours;
 
-    doc.setData({
-      reportDate: today,
-      courseName: CourseName?.toUpperCase() || "",
-      logs: tableData,
-    });
+        // Attended hours
+        let attendedHours = 0;
+        if (log.timeIn && log.timeout) {
+          const [inH, inM] = log.timeIn.split(":").map(Number);
+          const [outH, outM] = log.timeout.split(":").map(Number);
+          if (!isNaN(inH) && !isNaN(inM) && !isNaN(outH) && !isNaN(outM)) {
+            attendedHours = (outH * 60 + outM - (inH * 60 + inM)) / 60;
+          }
+        }
+        grouped[key].totalHours += attendedHours;
 
-    doc.render();
+        // Absences / Late
+        if (log.status?.toLowerCase() === "absent") grouped[key].absences += 1;
+        if (log.status?.toLowerCase() === "late") grouped[key].late += 1;
+      }
 
-    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+      const tableData = Object.values(grouped);
 
-    const outputDir = path.join(__dirname, "../generated");
-    const outputPath = path.join(outputDir, "DailyAttendanceReport.docx");
+      // Prepare report metadata
+      const today = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
 
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+      // Load template
+      const templatePath = path.join(
+        __dirname,
+        "../../templates/MonthlyReports.docx"
+      );
+      const content = fs.readFileSync(templatePath, "binary");
+      const zip = new PizZip(content);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+      });
 
-    fs.writeFileSync(outputPath, buffer);
+      // Bind data
+      doc.render({
+        reportDate: today,
+        courseName: CourseName?.toUpperCase() || "",
+        logs: tableData,
+      });
 
-    res.download(outputPath, "DailyAttendanceReport.docx");
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error generating report:", error.stack);
-    } else {
-      console.error("Unknown error occurred:", error);
+      // Generate file
+      const buffer = doc.getZip().generate({ type: "nodebuffer" });
+
+      const outputDir = path.join(__dirname, "../generated");
+      if (!fs.existsSync(outputDir))
+        fs.mkdirSync(outputDir, { recursive: true });
+      const outputPath = path.join(outputDir, "MonthlyDepartmentReport.docx");
+
+      fs.writeFileSync(outputPath, buffer);
+
+      res.download(outputPath, "MonthlyDepartmentReport.docx");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(
+          "❌ Error generating monthly department report:",
+          error.stack
+        );
+        res.status(500).json({ success: false, message: error.message });
+      } else {
+        console.error(
+          "❌ Unknown error generating monthly department report:",
+          error
+        );
+        res
+          .status(500)
+          .json({ success: false, message: "Unknown error occurred" });
+      }
     }
-    res.status(500).json({ message: "Error generating report" });
   }
-});
-
-router.post("/generate-monthly-report", async (req: Request, res: Response) => {
-  try {
-    const { CourseName } = req.body;
-
-    // ✅ Calculate first and last day of current month
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-based
-
-    const firstDay = new Date(year, month, 1, 0, 0, 0, 0);
-    const lastDay = new Date(year, month + 1, 0, 23, 59, 59, 999);
-
-    const query: any = {
-      date: { $gte: firstDay.toISOString(), $lte: lastDay.toISOString() },
-    };
-    if (CourseName) query.course = CourseName;
-
-    const logs = await Log.find(query)
-      .populate({ path: "schedule", populate: { path: "instructor" } })
-      .populate("college")
-      .lean();
-
-    // Group logs by instructor + course
-    const grouped: Record<string, any> = {};
-
-    for (const log of logs) {
-      const schedule: any = log.schedule || {};
-      const instructor = schedule?.instructor
-        ? `${schedule.instructor.first_name} ${schedule.instructor.last_name}`
-        : "N/A";
-
-      const key = `${instructor}_${schedule.courseCode}`;
-
-      if (!grouped[key]) {
-        grouped[key] = {
-          instructorName: instructor,
-          courseCode: schedule.courseCode || "N/A",
-          courseTitle: schedule.courseTitle || "N/A",
-          room: schedule.room || "N/A",
-          totalHours: 0,
-          requiredHours: 0,
-        };
-      }
-
-      // ✅ Calculate hours attended (if timeIn + timeout exist)
-      if (log.timeIn && log.timeout) {
-        const [hIn, mIn] = log.timeIn.split(":").map(Number);
-        const [hOut, mOut] = log.timeout.split(":").map(Number);
-
-        const timeInDate = new Date(year, month, 1, hIn, mIn);
-        const timeOutDate = new Date(year, month, 1, hOut, mOut);
-
-        const diffHours = (timeOutDate.getTime() - timeInDate.getTime()) / (1000 * 60 * 60);
-        grouped[key].totalHours += diffHours;
-      }
-
-      // ✅ Calculate required hours from schedule duration
-      if (schedule.startTime && schedule.endTime) {
-        const [sh, sm] = schedule.startTime.split(":").map(Number);
-        const [eh, em] = schedule.endTime.split(":").map(Number);
-
-        const schedStart = new Date(year, month, 1, sh, sm);
-        const schedEnd = new Date(year, month, 1, eh, em);
-
-        const schedHours = (schedEnd.getTime() - schedStart.getTime()) / (1000 * 60 * 60);
-
-        // Add per log (one required session per log)
-        grouped[key].requiredHours += schedHours;
-      }
-    }
-
-    const tableData = Object.values(grouped);
-
-    // ✅ Build docx report
-    const today = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-    });
-
-    const templatePath = path.join(
-      __dirname,
-      "../../templates/MonthlyReports.docx"
-    );
-    const content = fs.readFileSync(templatePath, "binary");
-
-    const zip = new PizZip(content);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-    });
-
-    doc.setData({
-      reportDate: today,
-      courseName: CourseName?.toUpperCase() || "",
-      logs: tableData,
-    });
-
-    doc.render();
-
-    const buffer = doc.getZip().generate({ type: "nodebuffer" });
-
-    const outputDir = path.join(__dirname, "../generated");
-    const outputPath = path.join(outputDir, "MonthlyAttendanceReport.docx");
-
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-
-    fs.writeFileSync(outputPath, buffer);
-
-    res.download(outputPath, "MonthlyAttendanceReport.docx");
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("❌ Error generating monthly report:", error.stack);
-    } else {
-      console.error("❌ Unknown error occurred:", error);
-    }
-    res.status(500).json({ message: "Error generating monthly report" });
-  }
-});
-
+);
 
 router.post("/show-daily-report", async (req: Request, res: Response) => {
   try {
@@ -396,10 +341,9 @@ router.post("/show-daily-report", async (req: Request, res: Response) => {
 
     const tableData = logs.map((log) => {
       const schedule: any = log.schedule || {};
-      const instructor =
-        schedule?.instructor
-          ? `${schedule.instructor.first_name} ${schedule.instructor.last_name}`
-          : "N/A";
+      const instructor = schedule?.instructor
+        ? `${schedule.instructor.first_name} ${schedule.instructor.last_name}`
+        : "N/A";
 
       return {
         name: instructor,
@@ -424,6 +368,46 @@ router.post("/show-daily-report", async (req: Request, res: Response) => {
   }
 });
 
+router.post(
+  "/show-monthly-department-logs",
+  async (req: Request, res: Response) => {
+    try {
+      const { CourseName } = req.body;
+
+      const query: any = {};
+      if (CourseName) {
+        query.course = CourseName; // compare frontend CourseName with log.course
+      }
+
+      const logs = await Log.find(query)
+        .populate({
+          path: "schedule",
+          populate: {
+            path: "instructor",
+            select: "first_name middle_name last_name", // ✅ only return names
+          },
+        })
+        .populate("college")
+        .lean();
+
+      res.status(200).json({
+        success: true,
+        count: logs.length,
+        data: logs,
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("❌ Error fetching logs:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+      } else {
+        console.error("❌ Unknown error fetching logs:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Unknown error occurred" });
+      }
+    }
+  }
+);
 
 // FETCH ALL FULL SCHEDULES TODAY BASED ON COURSE
 router.post(
@@ -935,7 +919,6 @@ EduVision Team`,
   }
 });
 
-
 router.get(
   "/instructors",
   async (req: Request, res: Response): Promise<void> => {
@@ -1034,12 +1017,10 @@ router.post(
         !semesterEndDate ||
         !section
       ) {
-        res
-          .status(400)
-          .json({
-            message:
-              "Please provide all required fields including semester dates and days.",
-          });
+        res.status(400).json({
+          message:
+            "Please provide all required fields including semester dates and days.",
+        });
         return;
       }
 

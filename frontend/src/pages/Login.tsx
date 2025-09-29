@@ -345,7 +345,7 @@ export default function AuthPage() {
       navigate(`/dashboard/${user.id}`);
     }
   } catch (error) {
-    let errorMessage = "Wala ka dito";
+    let errorMessage = "Error";
     if (axios.isAxiosError(error)) {
       errorMessage = error.response?.data?.message || "Invalid Credentials";
     }
