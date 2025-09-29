@@ -5,4 +5,12 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   base: '/',
   plugins: [react()],
+  server: {
+    proxy: {
+      "/ws": {
+        target: "ws://192.168.8.5:8080",
+        ws: true,
+      },
+    },
+  },
 })
