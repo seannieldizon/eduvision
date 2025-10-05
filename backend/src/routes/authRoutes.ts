@@ -1093,6 +1093,65 @@ router.get("/sections", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Get users by college code
+router.get("/college-users", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { collegeCode } = req.query;
+
+    if (!collegeCode) {
+      res.status(400).json({ message: "collegeCode is required" });
+      return;
+    }
+
+    // Find the college by code
+    const college = await CollegeModel.findOne({ code: collegeCode });
+    if (!college) {
+      res.status(404).json({ message: "College not found" });
+      return;
+    }
+
+    // Find all users in this college
+    const users = await UserModel.find({ college: college._id })
+      .populate('college', 'code name')
+      .populate('course', 'code name')
+      .select('first_name middle_name last_name username email role status college course faceImagePath')
+      .exec();
+
+    res.json(users);
+  } catch (error) {
+    console.error("Error fetching college users:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get user by ID
+router.get("/user/:userId", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      res.status(400).json({ message: "User ID is required" });
+      return;
+    }
+
+    const user = await UserModel.findById(userId)
+      .populate('college', 'code name')
+      .populate('course', 'code name')
+      .select('first_name middle_name last_name username email role status college course faceImagePath')
+      .exec();
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 interface ScheduleInput {
   courseCode: string;
   courseTitle: string;

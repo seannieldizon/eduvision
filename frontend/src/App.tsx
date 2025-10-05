@@ -18,6 +18,7 @@ import UserMain from "./pages/user/UserMain";
 import FacultyReports from "./pages/programchairperson/FacultyReports";
 import PendingFaculty from "./pages/programchairperson/PendingFaculty";
 import FaceRegistration from "./pages/programchairperson/FaceRegistration";
+import CameraTest from "./components/CameraTest";
 {
   /* for faculty*/
 }
@@ -232,6 +233,11 @@ export default function App() {
               <FacultyReports />
             </AdminMain>
           }
+        />
+
+        <Route
+          path="/camera-test"
+          element={<CameraTest />}
         />
 
         <Route path="*" element={<PageNotFound />} />

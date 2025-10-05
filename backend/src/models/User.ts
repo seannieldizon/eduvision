@@ -28,6 +28,13 @@ export interface IUser extends Document {
   course?: mongoose.Types.ObjectId;
   status: "forverification" | "active" | "inactive" | "permanent";
   profilePhotoUrl: string;
+  faceImagePath?: string;
+  faceImages?: Array<{
+    step: string;
+    filename: string;
+    path: string;
+    uploadedAt: Date;
+  }>;
 }
 
 const UserSchema: Schema<IUser> = new Schema({
@@ -64,6 +71,13 @@ const UserSchema: Schema<IUser> = new Schema({
     required: function (this: IUser) {
       return this.role === "instructor" || this.role === "programchairperson";
     },
+    validate: {
+      validator: function(v: any) {
+        // Allow null/undefined or valid ObjectId
+        return v == null || mongoose.Types.ObjectId.isValid(v);
+      },
+      message: 'Course must be a valid ObjectId or null'
+    }
   },
   status: {
     type: String,
@@ -71,6 +85,13 @@ const UserSchema: Schema<IUser> = new Schema({
     default: "forverification",
   },
   profilePhotoUrl: { type: String, default: "" },
+  faceImagePath: { type: String, default: "" },
+  faceImages: [{
+    step: { type: String, required: true },
+    filename: { type: String, required: true },
+    path: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
 });
 
 const UserModel: Model<IUser> = mongoose.model<IUser>("User", UserSchema);
