@@ -77,6 +77,29 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
     'Capture Step 4'
   ];
 
+  // Preload camera for faster initialization
+  useEffect(() => {
+    // Preload camera when component mounts (even before modal opens)
+    const preloadCamera = async () => {
+      try {
+        // Check if camera is already available
+        if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+          console.log('🎥 Preloading camera for faster initialization...');
+          // Just check camera availability without starting stream
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          if (videoDevices.length > 0) {
+            console.log('🎥 Camera devices found:', videoDevices.length);
+          }
+        }
+      } catch (error) {
+        console.log('🎥 Camera preload failed (this is normal):', error);
+      }
+    };
+    
+    preloadCamera();
+  }, []);
+
   // Reset states when modal opens
   useEffect(() => {
     if (open) {
@@ -122,13 +145,13 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
       // Start camera immediately
       startCamera();
       
-      // Fallback: Force camera ready after 5 seconds if still loading
+      // Faster fallback: Force camera ready after 2 seconds if still loading
       const fallbackTimeout = setTimeout(() => {
         if (cameraStatus === 'loading') {
-          console.log('🚨 FALLBACK: Forcing camera ready after 5 seconds');
+          console.log('🚨 FALLBACK: Forcing camera ready after 2 seconds');
           setCameraStatus('ready');
         }
-      }, 5000);
+      }, 2000);
       
       return () => clearTimeout(fallbackTimeout);
     } else {
@@ -160,7 +183,7 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
     }
   }, [cameraStatus, stream]);
 
-  // Start camera
+  // Start camera - Optimized for faster initialization
   const startCamera = async () => {
     try {
       console.log('🎥 Requesting camera access...');
@@ -172,13 +195,15 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
         setStream(null);
       }
       
-      // Try with simpler constraints first
+      // Optimized camera constraints for faster initialization
       let mediaStream;
       try {
+        // Try with optimized constraints first (lower resolution for faster startup)
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 640 },
-            height: { ideal: 480 },
+            width: { ideal: 320, max: 640 },
+            height: { ideal: 240, max: 480 },
+            frameRate: { ideal: 15, max: 30 },
             facingMode: 'user'
           }
         });
@@ -197,67 +222,45 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
         console.log('🎥 Attaching stream to video element');
         videoRef.current.srcObject = mediaStream;
         
+        let isReady = false;
         const handleVideoReady = () => {
+          if (isReady) return;
+          isReady = true;
           console.log('🎥 Video ready - camera initialized');
           setCameraStatus('ready');
         };
 
-        // Listen for multiple events to ensure video is ready
-        videoRef.current.onloadedmetadata = () => {
-          console.log('🎥 Video metadata loaded');
-          handleVideoReady();
-        };
-        videoRef.current.oncanplay = () => {
-          console.log('🎥 Video can play');
-          handleVideoReady();
-        };
-        videoRef.current.onplay = () => {
-          console.log('🎥 Video is playing');
-          handleVideoReady();
-        };
-        videoRef.current.onloadeddata = () => {
-          console.log('🎥 Video data loaded');
-          handleVideoReady();
-        };
+        // Optimized event listeners - use the first one that fires
+        const readyEvents = ['loadedmetadata', 'canplay', 'loadeddata'];
+        readyEvents.forEach(eventName => {
+          videoRef.current!.addEventListener(eventName, handleVideoReady, { once: true });
+        });
         
-        // Force play the video immediately
+        // Force play the video immediately with optimized settings
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.autoplay = true;
+        
+        // Immediate play attempt
+        videoRef.current.play().catch((error) => {
+          console.error('🎥 Video play error:', error);
+        });
+        
+        // Faster timeout - reduced from 1s to 500ms
         setTimeout(() => {
-          if (videoRef.current) {
-            console.log('🎥 Forcing video play');
-            videoRef.current.play().catch((error) => {
-              console.error('🎥 Video play error:', error);
-            });
+          if (cameraStatus === 'loading') {
+            console.log('🎥 Camera timeout 500ms - forcing ready state');
+            setCameraStatus('ready');
           }
-        }, 100);
+        }, 500);
         
-        // Multiple fallback timeouts
-        setTimeout(() => {
-          if (videoRef.current && videoRef.current.readyState >= 2) {
-            console.log('🎥 Video already ready - camera was already on');
-            handleVideoReady();
-          }
-        }, 200);
-        
+        // Backup timeout - reduced from 2s to 1s
         setTimeout(() => {
           if (cameraStatus === 'loading') {
             console.log('🎥 Camera timeout 1s - forcing ready state');
             setCameraStatus('ready');
           }
         }, 1000);
-        
-        setTimeout(() => {
-          if (cameraStatus === 'loading') {
-            console.log('🎥 Camera timeout 2s - forcing ready state');
-            setCameraStatus('ready');
-          }
-        }, 2000);
-        
-        setTimeout(() => {
-          if (cameraStatus === 'loading') {
-            console.log('🎥 Camera timeout 3s - forcing ready state');
-            setCameraStatus('ready');
-          }
-        }, 3000);
       }
     } catch (error: any) {
       console.error('❌ Camera error:', error);
@@ -784,6 +787,8 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
                 playsInline
                 muted
                 loop
+                preload="metadata"
+                webkit-playsinline="true"
                 style={{
                   width: '100%',
                   maxWidth: '500px',
