@@ -41,17 +41,20 @@ const FacultyDashboard: React.FC = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
+        if (!facultyId) return;
+        
         const res = await axios.get(
-          `https://eduvision-dura.onrender.com/api/auth/logs/all/today/${facultyId}`
+          `http://localhost:5000/api/auth/logs/all/today/${facultyId}`
         );
         setLogs(res.data);
       } catch (error) {
         console.error("Failed to fetch logs:", error);
+        setLogs([]); // Set empty array on error
       }
     };
 
     fetchLogs();
-  }, []);
+  }, [facultyId]);
 
   useEffect(() => {
     const fetchExpectedHours = async () => {
@@ -59,7 +62,7 @@ const FacultyDashboard: React.FC = () => {
         if (!facultyId) return;
 
         const response = await axios.get(
-          `https://eduvision-dura.onrender.com/api/auth/expected-hours/today/${facultyId}`
+          `http://localhost:5000/api/auth/expected-hours/today/${facultyId}`
         );
 
         const {
@@ -73,17 +76,23 @@ const FacultyDashboard: React.FC = () => {
         setExpectedMonth(totalThisMonthScheduleHours || 0);
       } catch (err) {
         console.error("Failed to fetch expected hours", err);
+        // Set default values on error
+        setExpectedToday(0);
+        setExpectedWeek(0);
+        setExpectedMonth(0);
       }
     };
 
     fetchExpectedHours();
-  }, []);
+  }, [facultyId]);
 
   useEffect(() => {
     const fetchNextSchedule = async () => {
       try {
+        if (!facultyId) return;
+        
         const response = await axios.get(
-          `https://eduvision-dura.onrender.com/api/auth/next-schedule/${facultyId}`
+          `http://localhost:5000/api/auth/next-schedule/${facultyId}`
         );
         setNextSchedule(response.data);
       } catch (error) {
@@ -94,9 +103,7 @@ const FacultyDashboard: React.FC = () => {
       }
     };
 
-    if (facultyId) {
-      fetchNextSchedule();
-    }
+    fetchNextSchedule();
   }, [facultyId]);
 
   const formatSchedule = (schedule: any) => {
@@ -145,10 +152,12 @@ const FacultyDashboard: React.FC = () => {
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
+        if (!facultyId) return;
+        
         console.log("Fetching today's schedules for facultyId:", facultyId);
 
         const response = await axios.get(
-          `https://eduvision-dura.onrender.com/api/auth/schedules/today/${facultyId}`
+          `http://localhost:5000/api/auth/schedules/today/${facultyId}`
         );
 
         console.log("Raw API response:", response);
@@ -163,9 +172,11 @@ const FacultyDashboard: React.FC = () => {
             typeof response.data,
             response.data
           );
+          setSchedules([]); // Set empty array if not array
         }
       } catch (error) {
         console.error("Error fetching schedules for today:", error);
+        setSchedules([]); // Set empty array on error
       }
     };
 
@@ -175,14 +186,20 @@ const FacultyDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        if (!facultyId) return;
+        
         const res = await axios.get(
-          `https://eduvision-dura.onrender.com/api/auth/logs/today/${facultyId}`
+          `http://localhost:5000/api/auth/logs/today/${facultyId}`
         );
         setToday(res.data.totalTodayHours || 0);
         setWeek(res.data.totalWeekHours || 0);
         setMonth(res.data.totalMonthHours || 0);
       } catch (error) {
         console.error("Failed to fetch stats", error);
+        // Set default values on error
+        setToday(0);
+        setWeek(0);
+        setMonth(0);
       }
     };
 
@@ -458,83 +475,91 @@ const FacultyDashboard: React.FC = () => {
                 gap={2}
                 position="relative"
               >
-                {logs.flatMap((log, index) => {
-                  const entries = [];
+                {logs.length === 0 ? (
+                  <Box textAlign="center" py={2}>
+                    <Typography variant="body2" color="text.secondary">
+                      No activity recorded today
+                    </Typography>
+                  </Box>
+                ) : (
+                  logs.flatMap((log, index) => {
+                    const entries = [];
 
-                  if (log.timeIn) {
-                    entries.push({ label: "Time In", time: log.timeIn });
-                  }
-                  if (log.timeout) {
-                    entries.push({ label: "Time Out", time: log.timeout });
-                  }
+                    if (log.timeIn) {
+                      entries.push({ label: "Time In", time: log.timeIn });
+                    }
+                    if (log.timeout) {
+                      entries.push({ label: "Time Out", time: log.timeout });
+                    }
 
-                  return entries.map((entry, subIndex, arr) => {
-                    const parsed = dayjs(entry.time, "HH:mm");
-                    const formattedTime = parsed.isValid()
-                      ? parsed.format("hh:mm A")
-                      : "Invalid time";
+                    return entries.map((entry, subIndex, arr) => {
+                      const parsed = dayjs(entry.time, "HH:mm");
+                      const formattedTime = parsed.isValid()
+                        ? parsed.format("hh:mm A")
+                        : "Invalid time";
 
-                    const isLastItem =
-                      subIndex === arr.length - 1 && index === logs.length - 1;
+                      const isLastItem =
+                        subIndex === arr.length - 1 && index === logs.length - 1;
 
-                    return (
-                      <Box
-                        key={`${index}-${subIndex}`}
-                        display="flex"
-                        position="relative"
-                        pl={3}
-                      >
-                        {/* Circle and connecting line */}
+                      return (
                         <Box
-                          position="absolute"
-                          left={-12}
-                          top={0}
+                          key={`${index}-${subIndex}`}
                           display="flex"
-                          flexDirection="column"
-                          alignItems="center"
+                          position="relative"
+                          pl={3}
                         >
-                          {/* Circle */}
+                          {/* Circle and connecting line */}
                           <Box
-                            width={12}
-                            height={12}
-                            borderRadius="50%"
-                            bgcolor="white"
-                            border={`2px solid ${green[400]}`}
-                            zIndex={1}
-                            mt={0.5}
-                          />
-                          {/* Connecting line */}
-                          {!isLastItem && (
-                            <Box
-                              flex={1}
-                              width={2}
-                              bgcolor={green[300]}
-                              mt={0.5}
-                              style={{ minHeight: 36 }}
-                            />
-                          )}
-                        </Box>
-
-                        {/* Entry content */}
-                        <Box>
-                          <Typography fontWeight={600} fontSize={13}>
-                            {entry.label}
-                          </Typography>
-                          <Box
+                            position="absolute"
+                            left={-12}
+                            top={0}
                             display="flex"
+                            flexDirection="column"
                             alignItems="center"
-                            color="grey.500"
                           >
-                            <AccessTimeIcon sx={{ fontSize: 12, mr: 0.5 }} />
-                            <Typography variant="caption">
-                              {formattedTime}
+                            {/* Circle */}
+                            <Box
+                              width={12}
+                              height={12}
+                              borderRadius="50%"
+                              bgcolor="white"
+                              border={`2px solid ${green[400]}`}
+                              zIndex={1}
+                              mt={0.5}
+                            />
+                            {/* Connecting line */}
+                            {!isLastItem && (
+                              <Box
+                                flex={1}
+                                width={2}
+                                bgcolor={green[300]}
+                                mt={0.5}
+                                style={{ minHeight: 36 }}
+                              />
+                            )}
+                          </Box>
+
+                          {/* Entry content */}
+                          <Box>
+                            <Typography fontWeight={600} fontSize={13}>
+                              {entry.label}
                             </Typography>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              color="grey.500"
+                            >
+                              <AccessTimeIcon sx={{ fontSize: 12, mr: 0.5 }} />
+                              <Typography variant="caption">
+                                {formattedTime}
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
-                      </Box>
-                    );
-                  });
-                })}
+                      );
+                    });
+                  })
+                )}
               </Box>
             </Paper>
           </Box>
@@ -572,33 +597,43 @@ const FacultyDashboard: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {[...schedules]
-                      .sort((a, b) => {
-                        const [aHour, aMin] = a.startTime
-                          .split(":")
-                          .map(Number);
-                        const [bHour, bMin] = b.startTime
-                          .split(":")
-                          .map(Number);
-                        return aHour !== bHour ? aHour - bHour : aMin - bMin;
-                      })
-                      .map((schedule, idx) => (
-                        <TableRow
-                          key={idx}
-                          sx={{
-                            backgroundColor: idx % 2 === 0 ? "white" : grey[50],
-                          }}
-                        >
-                          <TableCell sx={{ fontWeight: 600 }}>
-                            {idx + 1}
-                          </TableCell>
-                          <TableCell>
-                            {formatTime(schedule.startTime)}
-                          </TableCell>
-                          <TableCell>{formatTime(schedule.endTime)}</TableCell>
-                          <TableCell>{schedule.room}</TableCell>
-                        </TableRow>
-                      ))}
+                    {schedules.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            No schedules found for today
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      [...schedules]
+                        .sort((a, b) => {
+                          const [aHour, aMin] = a.startTime
+                            .split(":")
+                            .map(Number);
+                          const [bHour, bMin] = b.startTime
+                            .split(":")
+                            .map(Number);
+                          return aHour !== bHour ? aHour - bHour : aMin - bMin;
+                        })
+                        .map((schedule, idx) => (
+                          <TableRow
+                            key={idx}
+                            sx={{
+                              backgroundColor: idx % 2 === 0 ? "white" : grey[50],
+                            }}
+                          >
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {idx + 1}
+                            </TableCell>
+                            <TableCell>
+                              {formatTime(schedule.startTime)}
+                            </TableCell>
+                            <TableCell>{formatTime(schedule.endTime)}</TableCell>
+                            <TableCell>{schedule.room}</TableCell>
+                          </TableRow>
+                        ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
