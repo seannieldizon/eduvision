@@ -44,7 +44,7 @@ interface TimeLog {
   remarks: string;
 }
 
-const TimeBreakdown: React.FC = () => {
+const TimeBreakdown: React.FC = React.memo(() => {
   const { id } = useParams<{ id: string }>();
   const facultyId = id ?? "";
 
@@ -442,6 +442,8 @@ const TimeBreakdown: React.FC = () => {
       </Box>
     </AdminMain>
   );
-};
+});
+
+TimeBreakdown.displayName = 'TimeBreakdown';
 
 export default TimeBreakdown;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Typography,
   Box,
@@ -17,6 +17,7 @@ import {
   Select,
   MenuItem,
   Dialog,
+  CircularProgress,
 } from "@mui/material";
 import AdminMain from "./AdminMain";
 import axios from "axios";
@@ -60,13 +61,13 @@ const columns: readonly Column[] = [
   { id: "late", label: "No. of Late", minWidth: 100 },
 ];
 
-const FacultyReports: React.FC = () => {
+const FacultyReports: React.FC = React.memo(() => {
   const CourseName = localStorage.getItem("course") ?? "";
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [rows, setRows] = useState<AttendanceRow[]>([]);
   const [allLogs, setAllLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [openDetails, setOpenDetails] = useState(false);
   const [selectedLogs, setSelectedLogs] = useState<LogDetail[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState("");
@@ -85,38 +86,51 @@ const FacultyReports: React.FC = () => {
 
   // 🔹 Fetch logs from backend
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchData = async () => {
       try {
+        setLoading(true);
         const response = await axios.post(
           "http://localhost:5000/api/auth/show-monthly-department-logs",
           { CourseName }
         );
 
-        if (response.data.success) {
+        if (isMounted && response.data.success) {
           setAllLogs(response.data.data);
         }
       } catch (error) {
         console.error("Failed to fetch attendance data:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [CourseName]);
 
-  // 🔹 Filter logs by month/year
-  const filteredLogs = allLogs.filter((log) => {
-    const logDate = new Date(log.date);
-    const year = logDate.getFullYear().toString();
-    const month = (logDate.getMonth() + 1).toString().padStart(2, "0");
+  // 🔹 Filter logs by month/year - memoized for performance
+  const filteredLogs = useMemo(() => {
+    return allLogs.filter((log) => {
+      const logDate = new Date(log.date);
+      const year = logDate.getFullYear().toString();
+      const month = (logDate.getMonth() + 1).toString().padStart(2, "0");
 
-    const matchesYear = selectedYear ? year === selectedYear : true;
-    const matchesMonth = selectedMonth ? month === selectedMonth : true;
+      const matchesYear = selectedYear ? year === selectedYear : true;
+      const matchesMonth = selectedMonth ? month === selectedMonth : true;
 
-    return matchesYear && matchesMonth;
-  });
+      return matchesYear && matchesMonth;
+    });
+  }, [allLogs, selectedYear, selectedMonth]);
 
-  // 🔹 Group filtered logs
-  useEffect(() => {
+  // 🔹 Group filtered logs - memoized for performance
+  const rows = useMemo(() => {
     const groupedData: Record<string, AttendanceRow> = {};
 
     filteredLogs.forEach((log: any) => {
@@ -167,11 +181,11 @@ const FacultyReports: React.FC = () => {
       if (log.status?.toLowerCase() === "late") groupedData[key].late += 1;
     });
 
-    setRows(Object.values(groupedData));
+    return Object.values(groupedData);
   }, [filteredLogs]);
 
-  // 🔹 Handle row click to open details modal
-  const handleRowClick = (row: AttendanceRow) => {
+  // 🔹 Handle row click to open details modal - memoized for performance
+  const handleRowClick = useCallback((row: AttendanceRow) => {
     const logs = filteredLogs.filter(
       (log: any) => log.schedule._id === row.key
     );
@@ -195,12 +209,14 @@ const FacultyReports: React.FC = () => {
     setSelectedLogs(detailed);
     setSelectedInstructor(row.name);
     setOpenDetails(true);
-  };
+  }, [filteredLogs]);
 
-  // 🔹 Unique years from logs
-  const uniqueYears = Array.from(
-    new Set(allLogs.map((log) => new Date(log.date).getFullYear().toString()))
-  );
+  // 🔹 Unique years from logs - memoized for performance
+  const uniqueYears = useMemo(() => {
+    return Array.from(
+      new Set(allLogs.map((log) => new Date(log.date).getFullYear().toString()))
+    );
+  }, [allLogs]);
 
   // 🔹 Generate Report
   const handleGenerateReport = async () => {
@@ -333,7 +349,16 @@ const FacultyReports: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+                      <CircularProgress size={30} />
+                      <Typography mt={2} variant="body2" color="text.secondary">
+                        Loading attendance data...
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={columns.length} align="center">
                       No attendance records found for selected filters.
@@ -539,6 +564,8 @@ const FacultyReports: React.FC = () => {
       </Box>
     </AdminMain>
   );
-};
+});
+
+FacultyReports.displayName = 'FacultyReports';
 
 export default FacultyReports;
