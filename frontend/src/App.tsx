@@ -19,6 +19,7 @@ import FacultyReports from "./pages/programchairperson/FacultyReports";
 import PendingFaculty from "./pages/programchairperson/PendingFaculty";
 import FaceRegistration from "./pages/programchairperson/FaceRegistration";
 import CameraTest from "./components/CameraTest";
+import TimeBreakdown from "./pages/programchairperson/TimeBreakdown";
 {
   /* for faculty*/
 }
@@ -231,6 +232,15 @@ export default function App() {
           element={
             <AdminMain>
               <FacultyReports />
+            </AdminMain>
+          }
+        />
+
+        <Route
+          path="/faculty-time-breakdown/:id"
+          element={
+            <AdminMain>
+              <TimeBreakdown />
             </AdminMain>
           }
         />

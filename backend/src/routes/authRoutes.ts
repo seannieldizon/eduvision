@@ -183,142 +183,136 @@ router.get("/logs/today", async (req, res) => {
   }
 });
 
-router.post(
-  "/generate-monthly-department-logs",
-  async (req: Request, res: Response) => {
-    try {
-      const { CourseName } = req.body;
+router.post("/generate-monthly-department-logs", async (req: Request, res: Response) => {
+  try {
+    const { CourseName, selectedMonth, selectedYear } = req.body;
 
-      const query: any = {};
-      if (CourseName) query.course = CourseName;
+    const query: any = {};
+    if (CourseName) query.course = CourseName;
 
-      // Fetch logs with population
-      const logs = await Log.find(query)
-        .populate({
-          path: "schedule",
-          populate: {
-            path: "instructor",
-            select: "first_name middle_name last_name",
-          },
-        })
-        .populate("college")
-        .lean();
+    // 🔹 Fetch all logs first
+    const logs = await Log.find(query)
+      .populate({
+        path: "schedule",
+        populate: {
+          path: "instructor",
+          select: "first_name middle_name last_name",
+        },
+      })
+      .populate("college")
+      .lean();
 
-      // Group logs by schedule
-      const grouped: Record<string, any> = {};
-      for (const log of logs) {
-        const schedule: any = log.schedule || {};
-        const instructorObj = schedule?.instructor;
+    // 🔹 Filter logs by month and year before grouping
+    const filteredLogs = logs.filter((log: any) => {
+      if (!log.date) return false;
+      const logDate = new Date(log.date);
+      const logYear = logDate.getFullYear();
+      const logMonth = logDate.getMonth() + 1; // 0-indexed in JS
 
-        const instructorName = instructorObj
-          ? `${instructorObj.last_name}, ${instructorObj.first_name} ${
-              instructorObj.middle_name
-                ? instructorObj.middle_name.charAt(0) + "."
-                : ""
-            }`.trim()
-          : "N/A";
+      const matchesYear = selectedYear ? logYear === Number(selectedYear) : true;
+      const matchesMonth = selectedMonth ? logMonth === Number(selectedMonth) : true;
 
-        const key = `${schedule._id}`;
+      return matchesYear && matchesMonth;
+    });
 
-        // Compute scheduled session duration
-        let sessionHours = 0;
-        if (schedule?.startTime && schedule?.endTime) {
-          const [sh, sm] = schedule.startTime.split(":").map(Number);
-          const [eh, em] = schedule.endTime.split(":").map(Number);
-          if (!isNaN(sh) && !isNaN(sm) && !isNaN(eh) && !isNaN(em)) {
-            sessionHours = (eh * 60 + em - (sh * 60 + sm)) / 60;
-          }
+    // 🔹 Group filtered logs by schedule
+    const grouped: Record<string, any> = {};
+    for (const log of filteredLogs) {
+      const schedule: any = log.schedule || {};
+      const instructorObj = schedule?.instructor;
+
+      const instructorName = instructorObj
+        ? `${instructorObj.last_name}, ${instructorObj.first_name} ${
+            instructorObj.middle_name ? instructorObj.middle_name.charAt(0) + "." : ""
+          }`.trim()
+        : "N/A";
+
+      const key = `${schedule._id}`;
+
+      // Compute scheduled session duration
+      let sessionHours = 0;
+      if (schedule?.startTime && schedule?.endTime) {
+        const [sh, sm] = schedule.startTime.split(":").map(Number);
+        const [eh, em] = schedule.endTime.split(":").map(Number);
+        if (!isNaN(sh) && !isNaN(sm) && !isNaN(eh) && !isNaN(em)) {
+          sessionHours = (eh * 60 + em - (sh * 60 + sm)) / 60;
         }
-
-        if (!grouped[key]) {
-          grouped[key] = {
-            instructorName,
-            courseCode: schedule.courseCode || "N/A",
-            courseTitle: schedule.courseTitle || "N/A",
-            room: schedule.room || "N/A",
-            totalHours: 0, // attended hours
-            requiredHours: 0, // scheduled hours
-            absences: 0,
-            late: 0,
-          };
-        }
-
-        // Add required hours
-        grouped[key].requiredHours += sessionHours;
-
-        // Attended hours
-        let attendedHours = 0;
-        if (log.timeIn && log.timeout) {
-          const [inH, inM] = log.timeIn.split(":").map(Number);
-          const [outH, outM] = log.timeout.split(":").map(Number);
-          if (!isNaN(inH) && !isNaN(inM) && !isNaN(outH) && !isNaN(outM)) {
-            attendedHours = (outH * 60 + outM - (inH * 60 + inM)) / 60;
-          }
-        }
-        grouped[key].totalHours += attendedHours;
-
-        // Absences / Late
-        if (log.status?.toLowerCase() === "absent") grouped[key].absences += 1;
-        if (log.status?.toLowerCase() === "late") grouped[key].late += 1;
       }
 
-      const tableData = Object.values(grouped);
-
-      // Prepare report metadata
-      const today = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-      });
-
-      // Load template
-      const templatePath = path.join(
-        __dirname,
-        "../../templates/MonthlyReports.docx"
-      );
-      const content = fs.readFileSync(templatePath, "binary");
-      const zip = new PizZip(content);
-      const doc = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true,
-      });
-
-      // Bind data
-      doc.render({
-        reportDate: today,
-        courseName: CourseName?.toUpperCase() || "",
-        logs: tableData,
-      });
-
-      // Generate file
-      const buffer = doc.getZip().generate({ type: "nodebuffer" });
-
-      const outputDir = path.join(__dirname, "../generated");
-      if (!fs.existsSync(outputDir))
-        fs.mkdirSync(outputDir, { recursive: true });
-      const outputPath = path.join(outputDir, "MonthlyDepartmentReport.docx");
-
-      fs.writeFileSync(outputPath, buffer);
-
-      res.download(outputPath, "MonthlyDepartmentReport.docx");
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(
-          "❌ Error generating monthly department report:",
-          error.stack
-        );
-        res.status(500).json({ success: false, message: error.message });
-      } else {
-        console.error(
-          "❌ Unknown error generating monthly department report:",
-          error
-        );
-        res
-          .status(500)
-          .json({ success: false, message: "Unknown error occurred" });
+      if (!grouped[key]) {
+        grouped[key] = {
+          instructorName,
+          courseCode: schedule.courseCode || "N/A",
+          courseTitle: schedule.courseTitle || "N/A",
+          room: schedule.room || "N/A",
+          totalHours: 0, // attended
+          requiredHours: 0, // scheduled
+          absences: 0,
+          late: 0,
+        };
       }
+
+      grouped[key].requiredHours += sessionHours;
+
+      let attendedHours = 0;
+      if (log.timeIn && log.timeout) {
+        const [inH, inM] = log.timeIn.split(":").map(Number);
+        const [outH, outM] = log.timeout.split(":").map(Number);
+        if (!isNaN(inH) && !isNaN(inM) && !isNaN(outH) && !isNaN(outM)) {
+          attendedHours = (outH * 60 + outM - (inH * 60 + inM)) / 60;
+        }
+      }
+      grouped[key].totalHours += attendedHours;
+
+      if (log.status?.toLowerCase() === "absent") grouped[key].absences += 1;
+      if (log.status?.toLowerCase() === "late") grouped[key].late += 1;
+    }
+
+    const tableData = Object.values(grouped);
+
+    // 🔹 Report metadata — based on selected filters
+    const reportMonth = selectedMonth
+      ? new Date(0, Number(selectedMonth) - 1).toLocaleString("en-US", { month: "long" })
+      : "All Months";
+
+    const reportYear = selectedYear || "All Years";
+    const reportDate = `${reportMonth} ${reportYear}`;
+
+    // 🔹 Load DOCX template
+    const templatePath = path.join(__dirname, "../../templates/MonthlyReports.docx");
+    const content = fs.readFileSync(templatePath, "binary");
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    // 🔹 Bind data to DOCX
+    doc.render({
+      reportDate,
+      courseName: CourseName?.toUpperCase() || "N/A",
+      logs: tableData,
+    });
+
+    // 🔹 Generate and send file
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
+
+    const outputDir = path.join(__dirname, "../generated");
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+    const outputPath = path.join(outputDir, "MonthlyDepartmentReport.docx");
+
+    fs.writeFileSync(outputPath, buffer);
+    res.download(outputPath, "MonthlyDepartmentReport.docx");
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("❌ Error generating monthly department report:", error.stack);
+      res.status(500).json({ success: false, message: error.message });
+    } else {
+      console.error("❌ Unknown error generating monthly department report:", error);
+      res.status(500).json({ success: false, message: "Unknown error occurred" });
     }
   }
-);
+});
 
 router.post("/show-daily-report", async (req: Request, res: Response) => {
   try {
