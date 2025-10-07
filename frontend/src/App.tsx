@@ -46,6 +46,8 @@ import DeanDashboard from "./pages/dean/DeanDashboard";
 import ProgramchairInfo from "./pages/dean/ProgramchairInfo";
 import DeanLiveVideo from "./pages/dean/DeanLiveVideo";
 import PendingStaff from "./pages/dean/PendingStaff";
+import DeanFacultyReports from "./pages/dean/DeanFacultyReport";
+import DeanTimeBreakdown from "./pages/dean/DeanTimeBreakdown";
 
 export default function App() {
   return (
@@ -127,6 +129,24 @@ export default function App() {
           element={
             <DeanMain>
               <DeanDashboard />
+            </DeanMain>
+          }
+        />
+
+        <Route
+          path="/dean-faculty-reports/:id"
+          element={
+            <DeanMain>
+              <DeanFacultyReports />
+            </DeanMain>
+          }
+        />
+
+        <Route
+          path="/dean-faculty-time-breakdown/:id"
+          element={
+            <DeanMain>
+              <DeanTimeBreakdown />
             </DeanMain>
           }
         />

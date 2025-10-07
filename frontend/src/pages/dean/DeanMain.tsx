@@ -17,6 +17,8 @@ import {
   Videocam,
   People,
   PendingActions,
+  AccessTime,
+  Assessment,
 } from "@mui/icons-material";
 import AdminHeader from "../../components/AdminHeader";
 
@@ -53,6 +55,16 @@ const DeanMain: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       text: "Live Video",
       icon: <Videocam />,
       path: `/deanlivevideo/${facultyId}`,
+    },
+    {
+      text: "Time In/Out Breakdown",
+      icon: <AccessTime />,
+      path: "/dean-faculty-time-breakdown/:id",
+    },
+    {
+      text: "Generate Reports",
+      icon: <Assessment />,
+      path: "/dean-faculty-reports/:id",
     },
   ];
 

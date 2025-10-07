@@ -9,7 +9,7 @@ import {
   Grid,
   Checkbox,
   FormControlLabel,
-  Autocomplete 
+  Autocomplete,
 } from "@mui/material";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -92,6 +92,7 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -108,32 +109,41 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
 
   const handleSubmit = async () => {
     try {
-      const res = await axios.post("https://eduvision-dura.onrender.com/api/auth/schedules", formData);
+      setLoading(true);
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/add-schedules",
+        formData
+      );
       console.log("Schedule created:", res.data);
-      
+
       Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Schedule created successfully!',
+        icon: "success",
+        title: "Success",
+        text: "Schedule created successfully!",
         timer: 2000,
         showConfirmButton: false,
       });
-  
+
       onClose();
     } catch (error) {
       console.error("Failed to create schedule", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to create schedule. Please try again.',
+        icon: "error",
+        title: "Error",
+        text: "Failed to create schedule. Please try again.",
       });
+    } finally {
+      setLoading(false); // stop loading
     }
   };
+
 
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const res = await axios.get<Subject[]>("https://eduvision-dura.onrender.com/api/auth/subjects");
+        const res = await axios.get<Subject[]>(
+          "https://eduvision-dura.onrender.com/api/auth/subjects"
+        );
         setSubjects(res.data);
       } catch (err) {
         console.error("Failed to fetch subjects", err);
@@ -146,34 +156,41 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get<Room[]>("https://eduvision-dura.onrender.com/api/auth/rooms");
+        const res = await axios.get<Room[]>(
+          "https://eduvision-dura.onrender.com/api/auth/rooms"
+        );
         setRooms(res.data);
       } catch (error) {
         console.error("Failed to fetch rooms", error);
       }
     };
-  
+
     fetchRooms();
   }, []);
 
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const res = await axios.get<Section[]>("https://eduvision-dura.onrender.com/api/auth/sections");
+        const res = await axios.get<Section[]>(
+          "https://eduvision-dura.onrender.com/api/auth/sections"
+        );
         setSections(res.data);
       } catch (error) {
         console.error("Failed to fetch sections", error);
       }
     };
-  
+
     fetchSections();
   }, []);
-  
+
   useEffect(() => {
     const fetchSemesters = async () => {
       try {
-        const res = await axios.get<Semester[]>("https://eduvision-dura.onrender.com/api/auth/all-semester");
-        setSemesters(res.data);
+        const res = await axios.get(
+          "http://localhost:5000/api/auth/all-semesters"
+        );
+        // ✅ Use the data array, not the whole object
+        setSemesters(res.data.data);
       } catch (error) {
         console.error("Error fetching semesters:", error);
       }
@@ -190,7 +207,9 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
           <Grid item xs={12}>
             <Autocomplete
               options={subjects}
-              getOptionLabel={(option) => `${option.courseCode} - ${option.courseTitle}`}
+              getOptionLabel={(option) =>
+                `${option.courseCode} - ${option.courseTitle}`
+              }
               onChange={(_, value) => {
                 setFormData((prev) => ({
                   ...prev,
@@ -199,7 +218,12 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
                 }));
               }}
               renderInput={(params) => (
-                <TextField {...params} label="Course Code" variant="outlined" fullWidth />
+                <TextField
+                  {...params}
+                  label="Course Code"
+                  variant="outlined"
+                  fullWidth
+                />
               )}
               isOptionEqualToValue={(option, value) => option._id === value._id}
             />
@@ -216,7 +240,12 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
                 }));
               }}
               renderInput={(params) => (
-                <TextField {...params} label="Room" variant="outlined" fullWidth />
+                <TextField
+                  {...params}
+                  label="Room"
+                  variant="outlined"
+                  fullWidth
+                />
               )}
               isOptionEqualToValue={(option, value) => option._id === value._id}
             />
@@ -225,7 +254,9 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
           <Grid item xs={6}>
             <Autocomplete
               options={sections}
-              getOptionLabel={(option) => `${option.course} - ${option.section}${option.block}`}
+              getOptionLabel={(option) =>
+                `${option.course} - ${option.section}${option.block}`
+              }
               onChange={(_, value) => {
                 setFormData((prev) => ({
                   ...prev,
@@ -233,19 +264,26 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
                 }));
               }}
               renderInput={(params) => (
-                <TextField {...params} label="Section" variant="outlined" fullWidth />
+                <TextField
+                  {...params}
+                  label="Section"
+                  variant="outlined"
+                  fullWidth
+                />
               )}
               isOptionEqualToValue={(option, value) => option._id === value._id}
             />
           </Grid>
           <Grid item xs={12}>
             <Autocomplete
-              options={faculty ? [faculty] : []}  // only current user
+              options={faculty ? [faculty] : []} // only current user
               getOptionLabel={(option) => {
-                const middleInitial = option.middle_name ? option.middle_name.charAt(0).toUpperCase() + "." : "";
+                const middleInitial = option.middle_name
+                  ? option.middle_name.charAt(0).toUpperCase() + "."
+                  : "";
                 return `${option.last_name}, ${option.first_name} ${middleInitial}`;
               }}
-              value={faculty || null}  // set to current user or null
+              value={faculty || null} // set to current user or null
               onChange={(_, value) => {
                 // no need to change because it's disabled, but you can keep this or remove
                 setFormData((prev) => ({
@@ -259,18 +297,19 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
                   label="Instructor"
                   variant="outlined"
                   fullWidth
-                  disabled  // disable typing and dropdown
+                  disabled // disable typing and dropdown
                 />
               )}
-              disableClearable  // disables clear (X) button
-              popupIcon={null}   // hide dropdown arrow icon
+              disableClearable // disables clear (X) button
+              popupIcon={null} // hide dropdown arrow icon
             />
-
           </Grid>
           <Grid item xs={12}>
             <Autocomplete
-              options={semesters}
-              getOptionLabel={(option) => `${option.semesterName} - AY ${option.academicYear}`}
+              options={semesters} // now an array
+              getOptionLabel={(option) =>
+                `${option.semesterName} - AY ${option.academicYear}`
+              }
               onChange={(_, value) => {
                 setFormData((prev) => ({
                   ...prev,
@@ -278,13 +317,18 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
                   semesterEndDate: value?.endDate || "",
                 }));
               }}
-              renderInput={(params) => (
-                <TextField {...params} label="Semester" variant="outlined" fullWidth />
-              )}
               isOptionEqualToValue={(option, value) =>
                 option.semesterName === value.semesterName &&
                 option.academicYear === value.academicYear
               }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Semester"
+                  variant="outlined"
+                  fullWidth
+                />
+              )}
             />
           </Grid>
 
@@ -330,8 +374,13 @@ const AddManualSchedule: React.FC<AddManualScheduleProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Submit
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+          disabled={loading} // disable while loading
+        >
+          {loading ? "Submitting..." : "Submit"} {/* show text */}
         </Button>
       </DialogActions>
     </Dialog>
