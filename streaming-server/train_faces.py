@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 # 👇 use your updated folder path
-dataset_dir = Path(r"C:\Users\mark\Desktop\CloudinaryBackup\facedata\instructor\68a74fd49941aa012f5c0a2f")
+dataset_dir = Path(r"C:\Users\mark\Documents\GitHub\eduvision\streaming-server\faces")
 
 cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
 face_cascade = cv2.CascadeClassifier(cascade_path)
