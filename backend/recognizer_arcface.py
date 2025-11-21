@@ -26,9 +26,12 @@ sys.stderr.reconfigure(line_buffering=True)
 SCRIPT_DIR = Path(__file__).parent.resolve()
 DATASET_DIR = SCRIPT_DIR.parent / "streaming-server" / "faces"
 # Optimized for i5 12th gen + RTX 4050 + 16GB RAM
-CONF_THRESHOLD = 0.55  # Slightly lower threshold for faster recognition while maintaining accuracy
+CONF_THRESHOLD = 0.60  # Improved threshold for better accuracy (increased from 0.55)
 ABSENCE_TIMEOUT_SECONDS = 300  # 5 minutes = 300 seconds
 LATE_THRESHOLD_MINUTES = 15  # 15 minutes late threshold
+# Enhanced face detection settings
+MIN_FACE_SIZE = 50  # Minimum face size in pixels for better detection
+MAX_FACE_SIZE = 1000  # Maximum face size in pixels
 BACKEND_API = "http://localhost:5000/api/auth"  # TypeScript server with API endpoints
 
 def get_current_day():
@@ -547,8 +550,8 @@ try:
                        "This is likely due to insufficient RAM or corrupted model files. "
                        "Try: 1) Free up memory, 2) Re-download models, or 3) Use a machine with more RAM.")
     
-    # Ultra-low resolution for maximum speed and lower memory: 256x256
-    app.prepare(ctx_id=-1, det_size=(256, 256))  # Reduced from 320x320 for even faster detection
+    # Optimized resolution for better accuracy while maintaining performance: 320x320
+    app.prepare(ctx_id=-1, det_size=(320, 320))  # Increased from 256x256 for better face detection accuracy
     init_time = time.time() - init_start
     print(f"[INFO] ✅ ArcFace model loaded successfully on CPU (took {init_time:.2f}s)", file=sys.stderr, flush=True)
     print(f"[INFO] Model: {model_name}, det_size=(256, 256) - Optimized for low memory", file=sys.stderr, flush=True)
@@ -669,7 +672,24 @@ try:
                     w = x2 - x1
                     h = y2 - y1
                     
-                    emb = f.embedding / norm(f.embedding)
+                    # Enhanced face validation - filter out faces that are too small or too large
+                    face_area = w * h
+                    min_area = MIN_FACE_SIZE * MIN_FACE_SIZE
+                    max_area = MAX_FACE_SIZE * MAX_FACE_SIZE
+                    
+                    if face_area < min_area or face_area > max_area:
+                        if frame_count % 100 == 0:
+                            print(f"[DEBUG] Skipping face - size out of range: {w}x{h} (area: {face_area})", file=sys.stderr, flush=True)
+                        continue
+                    
+                    # Enhanced embedding normalization with validation
+                    emb = f.embedding
+                    emb_norm = norm(emb)
+                    if emb_norm == 0:
+                        if frame_count % 100 == 0:
+                            print(f"[WARN] Zero-length embedding detected, skipping", file=sys.stderr, flush=True)
+                        continue
+                    emb = emb / emb_norm
                     
                     # Check if we have any known faces to compare against
                     if len(known_embeddings) == 0:
@@ -678,9 +698,22 @@ try:
                             print(f"[WARNING] Face detected but no faces registered in database! Add face images to: {DATASET_DIR}", file=sys.stderr, flush=True)
                         continue
                     
+                    # Enhanced similarity calculation with multiple matching strategies
                     sims = np.dot(known_embeddings, emb)
                     best_idx = np.argmax(sims)
                     best_score = sims[best_idx]
+                    
+                    # Additional validation: check if the best match is significantly better than second best
+                    if len(sims) > 1:
+                        sorted_sims = np.sort(sims)[::-1]
+                        second_best_score = sorted_sims[1] if len(sorted_sims) > 1 else 0
+                        score_diff = best_score - second_best_score
+                        
+                        # Require minimum difference to avoid ambiguous matches
+                        if score_diff < 0.05 and best_score < 0.75:
+                            if frame_count % 300 == 0:
+                                print(f"[DEBUG] Ambiguous match - best: {best_score:.3f}, second: {second_best_score:.3f}, diff: {score_diff:.3f}", file=sys.stderr, flush=True)
+                            continue
                     
                     if best_score > CONF_THRESHOLD:
                         name = known_names[best_idx]

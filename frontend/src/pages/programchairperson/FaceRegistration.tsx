@@ -81,52 +81,63 @@ const FaceRegistration: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      const params: Record<string, string> = {};
+      const storedRole = localStorage.getItem("role")?.toLowerCase();
+      const currentUserId = localStorage.getItem("userId") ?? "";
       let courseName = localStorage.getItem("course");
+      
+      if (storedRole === "programchairperson" && currentUserId) {
+        params.programChairId = currentUserId;
+      }
       
       console.log("Course code from localStorage:", courseName);
       
-      // If no course code in localStorage, try to get it from current user
-      if (!courseName) {
-        const currentUserId = localStorage.getItem("userId");
-        console.log("No course in localStorage, fetching from user ID:", currentUserId);
-        
-        if (currentUserId) {
-          try {
-            const userResponse = await axios.get(
-              `${API_BASE_URL}/api/auth/user/${currentUserId}`
-            );
-            console.log("Current user data:", userResponse.data);
-            
-            if (userResponse.data.course) {
-              if (typeof userResponse.data.course === "object" && userResponse.data.course.code) {
-                courseName = userResponse.data.course.code;
-              } else {
-                courseName = userResponse.data.course;
+      // If we're not using program chair filtering, ensure we have a course code
+      if (!params.programChairId) {
+        if (!courseName) {
+          console.log("No course in localStorage, fetching from user ID:", currentUserId);
+          
+          if (currentUserId) {
+            try {
+              const userResponse = await axios.get(
+                `${API_BASE_URL}/api/auth/user/${currentUserId}`
+              );
+              console.log("Current user data:", userResponse.data);
+              
+              if (userResponse.data.course) {
+                if (typeof userResponse.data.course === "object" && userResponse.data.course.code) {
+                  courseName = userResponse.data.course.code;
+                } else {
+                  courseName = userResponse.data.course;
+                }
+                localStorage.setItem("course", courseName || "");
+                console.log("Updated course code from user data:", courseName);
               }
-              localStorage.setItem("course", courseName || "");
-              console.log("Updated course code from user data:", courseName);
+            } catch (userError) {
+              console.error("Error fetching current user:", userError);
             }
-          } catch (userError) {
-            console.error("Error fetching current user:", userError);
           }
         }
+        
+        if (!courseName) {
+          setError("Course information not found. Please log in again.");
+          setUsers([]);
+          setFilteredUsers([]);
+          return;
+        }
+        
+        // Normalize course code to lowercase for consistency
+        params.courseName = courseName.toLowerCase().trim();
+        console.log("Fetching faculty for course:", params.courseName);
+      } else {
+        console.log("Fetching faculty for program chair:", params.programChairId);
       }
-      
-      if (!courseName) {
-        setError("Course information not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
-
-      // Normalize course code to lowercase for consistency
-      const normalizedCourseName = courseName.toLowerCase().trim();
-      console.log("Fetching faculty for course:", normalizedCourseName);
       
       // Use the same endpoint as FacultyInfo page
       const response = await axios.get(
         `${API_BASE_URL}/api/auth/faculty`,
         {
-          params: { courseName: normalizedCourseName },
+          params,
           headers: {
             'Content-Type': 'application/json'
           }

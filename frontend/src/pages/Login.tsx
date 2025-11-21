@@ -309,6 +309,9 @@ export default function AuthPage() {
 
     localStorage.setItem("token", token);
     localStorage.setItem("userId", user.id);
+    if (user.role) {
+      localStorage.setItem("role", user.role);
+    }
 
     if (user.course) {
       localStorage.setItem("course", user.course);

@@ -161,7 +161,7 @@ router.get("/faculty-schedules/:facultyId", async (req: Request, res: Response):
             semesterStartDate: { $lte: currentDate.toISOString() }, 
             semesterEndDate: { $gte: currentDate.toISOString() }  
         })
-        .select("startTime endTime room")
+        .select("startTime endTime room");
 
         if (!schedules.length) {
             res.status(404).json({ message: "No schedules found for today" });

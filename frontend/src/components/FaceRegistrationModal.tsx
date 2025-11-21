@@ -74,10 +74,10 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const steps = [
-    'Capture Step 1',
-    'Capture Step 2', 
-    'Capture Step 3',
-    'Capture Step 4'
+    'Front View',
+    'Right Angle', 
+    'Left Angle',
+    'Upward Angle'
   ];
 
   // Preload camera for faster initialization
@@ -705,12 +705,12 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
 
   const getAngleInstructions = (step: number) => {
       const instructions = [
-        'Step 1: Position your face in the circular camera view and look straight ahead (Background will be automatically removed)',
-        'Step 2: Keep your face in the circle, turn slightly to the right (Only your face will be saved)',
-        'Step 3: Keep your face in the circle, turn slightly to the left (Background removal is automatic)', 
-        'Step 4: Keep your face in the circle, look up slightly (Clean face-only images will be saved)'
+        'Step 1: Position your face in the frame and look STRAIGHT AHEAD. Keep your eyes at the yellow line. (Front view - 10 photos)',
+        'Step 2: Keep your face centered in the frame, turn your head SLIGHTLY to the RIGHT (about 30-45 degrees). (Right angle - 10 photos)',
+        'Step 3: Keep your face centered in the frame, turn your head SLIGHTLY to the LEFT (about 30-45 degrees). (Left angle - 10 photos)', 
+        'Step 4: Keep your face centered in the frame, tilt your head SLIGHTLY UP (about 15-20 degrees). (Upward angle - 10 photos)'
       ];
-      return instructions[step] || `Step ${step + 1}: Position your face in the circular camera view (Automatic background removal)`;
+      return instructions[step] || `Step ${step + 1}: Position your face in the frame following the alignment guides (Automatic background removal)`;
   };
 
   const isStepComplete = (stepIndex: number) => {
@@ -857,6 +857,134 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
                 }}
               />
               
+              {/* Enhanced Face Alignment Frame/Guide */}
+              {/* Outer alignment ring */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '200px',
+                  height: '200px',
+                  borderRadius: '50%',
+                  border: '2px dashed rgba(76, 175, 80, 0.6)',
+                  zIndex: 10,
+                  pointerEvents: 'none',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  '@keyframes pulse': {
+                    '0%, 100%': { opacity: 0.6, transform: 'translate(-50%, -50%) scale(1)' },
+                    '50%': { opacity: 0.9, transform: 'translate(-50%, -50%) scale(1.05)' }
+                  }
+                }}
+              />
+              
+              {/* Inner alignment ring */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '160px',
+                  height: '160px',
+                  borderRadius: '50%',
+                  border: '2px solid rgba(76, 175, 80, 0.8)',
+                  zIndex: 10,
+                  pointerEvents: 'none'
+                }}
+              />
+              
+              {/* Face position guide lines - Horizontal */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '140px',
+                  height: '2px',
+                  backgroundColor: 'rgba(76, 175, 80, 0.5)',
+                  zIndex: 10,
+                  pointerEvents: 'none',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: '-20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(76, 175, 80, 0.6)'
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    right: '-20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(76, 175, 80, 0.6)'
+                  }
+                }}
+              />
+              
+              {/* Face position guide lines - Vertical */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '2px',
+                  height: '140px',
+                  backgroundColor: 'rgba(76, 175, 80, 0.5)',
+                  zIndex: 10,
+                  pointerEvents: 'none',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: '-20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(76, 175, 80, 0.6)'
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: '-20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(76, 175, 80, 0.6)'
+                  }
+                }}
+              />
+              
+              {/* Eye level indicator */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '40%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '120px',
+                  height: '1px',
+                  backgroundColor: 'rgba(255, 255, 0, 0.7)',
+                  zIndex: 11,
+                  pointerEvents: 'none',
+                  boxShadow: '0 0 4px rgba(255, 255, 0, 0.5)'
+                }}
+              />
+              
               {/* Center dot for precise positioning */}
               <Box
                 sx={{
@@ -864,34 +992,93 @@ const FaceRegistrationModal: React.FC<FaceRegistrationModalProps> = ({
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '6px',
-                  height: '6px',
+                  width: '8px',
+                  height: '8px',
                   borderRadius: '50%',
                   backgroundColor: '#4caf50',
                   zIndex: 11,
-                  boxShadow: '0 0 8px rgba(76, 175, 80, 0.8)'
+                  boxShadow: '0 0 12px rgba(76, 175, 80, 1)',
+                  border: '2px solid white'
                 }}
               />
+              
+              {/* Corner alignment guides */}
+              {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((corner) => {
+                const positions: any = {
+                  'top-left': { top: '20%', left: '20%', transform: 'translate(-50%, -50%)' },
+                  'top-right': { top: '20%', right: '20%', transform: 'translate(50%, -50%)' },
+                  'bottom-left': { bottom: '20%', left: '20%', transform: 'translate(-50%, 50%)' },
+                  'bottom-right': { bottom: '20%', right: '20%', transform: 'translate(50%, 50%)' }
+                };
+                return (
+                  <Box
+                    key={corner}
+                    sx={{
+                      position: 'absolute',
+                      ...positions[corner],
+                      width: '20px',
+                      height: '20px',
+                      border: '2px solid rgba(76, 175, 80, 0.5)',
+                      zIndex: 10,
+                      pointerEvents: 'none',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(76, 175, 80, 0.6)'
+                      }
+                    }}
+                  />
+                );
+              })}
               
               {/* Position your face here text */}
               <Box
                 sx={{
                   position: 'absolute',
-                  top: '-40px',
+                  top: '-50px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
                   color: 'white',
-                  padding: '6px 12px',
-                  borderRadius: '15px',
-                  fontSize: '12px',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
                   fontWeight: 'bold',
                   zIndex: 12,
                   textAlign: 'center',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  border: '1px solid rgba(76, 175, 80, 0.5)'
                 }}
               >
-                🎯 Position your face in the circle
+                🎯 Align your face within the frame
+              </Box>
+              
+              {/* Alignment tips */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: '-60px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                  color: '#4caf50',
+                  padding: '6px 12px',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  zIndex: 12,
+                  textAlign: 'center',
+                  maxWidth: '220px',
+                  border: '1px solid rgba(76, 175, 80, 0.3)'
+                }}
+              >
+                👁️ Eyes at yellow line • Face centered • Look straight
               </Box>
             </Box>
           )}

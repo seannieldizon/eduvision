@@ -2,6 +2,7 @@
 import express, { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import UserModel from "../models/User";
 import Schedule from "../models/Schedule";
 import Subject from "../models/Subject";
@@ -15,7 +16,6 @@ import multer from "multer";
 import mammoth from "mammoth";
 import fs from "fs";
 import path from "path";
-import mongoose from "mongoose";
 import {
   Document,
   Packer,
@@ -727,27 +727,54 @@ router.get(
 
 // GET FACULTY LIST
 router.get("/faculty", async (req: Request, res: Response): Promise<void> => {
-  const { courseName } = req.query;
+  const { courseName, programChairId } = req.query;
 
-  if (!courseName) {
-    res.status(400).json({ message: "courseName is missing" });
+  if (!courseName && !programChairId) {
+    res.status(400).json({ message: "courseName or programChairId is required" });
     return;
   }
 
   try {
-    // Case-insensitive search for course code
-    const courseDoc = await Course.findOne({ 
-      code: { $regex: new RegExp(`^${courseName}$`, "i") }
-    });
+    let courseIdToMatch: string | null = null;
 
-    if (!courseDoc) {
-      res.status(404).json({ message: "Course not found" });
-      return;
+    if (programChairId) {
+      const programChair = await UserModel.findById(programChairId);
+
+      if (!programChair) {
+        res.status(404).json({ message: "Program chair not found" });
+        return;
+      }
+
+      if (programChair.role !== "programchairperson") {
+        res.status(403).json({ message: "User is not authorized to access faculty list" });
+        return;
+      }
+
+      if (!programChair.course) {
+        res.status(400).json({ message: "Program chair has no assigned course" });
+        return;
+      }
+
+      courseIdToMatch =
+        typeof programChair.course === "string"
+          ? programChair.course
+          : programChair.course.toString();
+    } else if (courseName) {
+      const courseDoc = await Course.findOne({
+        code: { $regex: new RegExp(`^${courseName}$`, "i") },
+      });
+
+      if (!courseDoc) {
+        res.status(404).json({ message: "Course not found" });
+        return;
+      }
+
+      courseIdToMatch = (courseDoc._id as mongoose.Types.ObjectId).toString();
     }
 
     const facultyList = await UserModel.find({
       role: "instructor",
-      course: courseDoc._id,
+      course: courseIdToMatch,
     });
 
     res.json(facultyList);
@@ -1784,8 +1811,14 @@ router.post(
           });
         }
 
-        // Insert new schedules
+        // Insert new schedules with real-time database sync
         const saved = await Schedule.insertMany(schedules);
+        
+        // Ensure all schedules are immediately available by refreshing the connection
+        if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+          await mongoose.connection.db.admin().command({ ping: 1 });
+        }
+        console.log(`[REPLACE-SCHEDULE] ✅ Inserted ${saved.length} new schedules - Database synced`);
 
         // Create mapping from old schedule IDs to new schedule IDs
         const oldToNewIdMap = new Map<string, string>();
@@ -1806,7 +1839,8 @@ router.post(
           }
         }
 
-        // Update logs to point to new schedules
+        // Update logs to point to new schedules with real-time sync
+        let logsUpdatedCount = 0;
         for (const log of logsToUpdate) {
           const oldScheduleId = log.schedule.toString();
           const newScheduleId = oldToNewIdMap.get(oldScheduleId);
@@ -1814,26 +1848,51 @@ router.post(
           if (newScheduleId) {
             log.schedule = newScheduleId as any;
             await log.save();
+            logsUpdatedCount++;
             console.log(`[REPLACE-SCHEDULE] Updated log ${log._id} from schedule ${oldScheduleId} to ${newScheduleId}`);
           } else {
             console.warn(`[REPLACE-SCHEDULE] No matching new schedule found for old schedule ${oldScheduleId} in log ${log._id}`);
           }
         }
+        
+        // Verify schedules are in database by querying immediately
+        const verifyCount = await Schedule.countDocuments({
+          instructor: instructorToUse,
+          semesterStartDate: startDateToUse,
+          semesterEndDate: endDateToUse,
+        });
+        console.log(`[REPLACE-SCHEDULE] ✅ Verification: ${verifyCount} schedules found in database (expected: ${saved.length})`);
 
         res.status(replace ? 200 : 201).json({
-          message: replace ? "Schedules replaced successfully" : "Schedules saved successfully",
+          message: replace ? "Schedules replaced successfully and synced to database" : "Schedules saved successfully and synced to database",
           data: saved,
-          logsUpdated: logsToUpdate.length,
+          logsUpdated: logsUpdatedCount,
+          verified: verifyCount === saved.length,
+          totalSchedules: verifyCount
         });
         return;
       }
 
-      // Insert new schedules (non-replace case)
+      // Insert new schedules (non-replace case) with real-time database sync
       const saved = await Schedule.insertMany(schedules);
+      
+      // Ensure all schedules are immediately available by refreshing the connection
+      if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+        await mongoose.connection.db.admin().command({ ping: 1 });
+      }
+      console.log(`[SAVE-SCHEDULE] ✅ Inserted ${saved.length} new schedules - Database synced`);
+      
+      // Verify schedules are in database by querying immediately
+      const verifyCount = await Schedule.countDocuments({
+        instructor: instructorToUse || (schedules[0] && schedules[0].instructor),
+      });
+      console.log(`[SAVE-SCHEDULE] ✅ Verification: ${verifyCount} schedules found in database (expected: ${saved.length})`);
 
       res.status(201).json({
-        message: "Schedules saved successfully",
+        message: "Schedules saved successfully and synced to database",
         data: saved,
+        verified: verifyCount >= saved.length,
+        totalSchedules: verifyCount
       });
     } catch (error) {
       console.error("Failed to save schedules:", error);

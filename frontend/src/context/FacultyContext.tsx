@@ -46,9 +46,22 @@ export const FacultyProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     try {
       const CourseName = localStorage.getItem("course") ?? "";
+      const userRole = localStorage.getItem("role")?.toLowerCase();
+      const programChairId = localStorage.getItem("userId") ?? "";
+
+      const params: Record<string, string> = {};
+
+      if (userRole === "programchairperson" && programChairId) {
+        params.programChairId = programChairId;
+      } else if (CourseName) {
+        params.courseName = CourseName;
+      } else {
+        setFacultyList([]);
+        return;
+      }
 
       const res = await axios.get(`${API_BASE_URL}/api/auth/faculty`, {
-        params: { courseName: CourseName },
+        params,
         // axios accepts AbortSignal via `signal` (axios v1+)
         signal,
       });
